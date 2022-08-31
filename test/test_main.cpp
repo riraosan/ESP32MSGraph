@@ -9,6 +9,4 @@ void setup() {
 
 void loop() {
 }
-#else
-#include "./00_basic/presence.ino"
 #endif
