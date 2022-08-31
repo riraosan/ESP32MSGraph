@@ -4,12 +4,11 @@
 //#define BUILD_TEST
 
 #if defined(BUILD_TEST)
-#include <ESP32MSGraph.h>
 void setup() {
 }
 
-void loop(){
+void loop() {
 }
 #else
-#include "00_basic/presence.ino"
+#include "./00_basic/presence.ino"
 #endif

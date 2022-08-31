@@ -637,18 +637,6 @@ bool ESP32MSGraph::refreshToken(void) {
   return success;
 }
 
-/*
-IOTWEBCONF_STATE_NOT_CONFIGURED || IOTWEBCONF_STATE_AP_MODE
-
-SMODEWIFICONNECTING SMODEWIFICONNECTING
-SMODEWIFICONNECTED SMODEWIFICONNECTED
-
-SMODEDEVICELOGINSTARTED
-
-SMODEPOLLPRESENCE
-
-SMODEREFRESHTOKEN
-*/
 // Implementation of a statemachine to handle the different application states
 void ESP32MSGraph::statemachine(void) {
   // Statemachine: Check states of iotWebConf to detect AP mode and WiFi Connection attempt
@@ -831,7 +819,6 @@ void ESP32MSGraph::pollPresence(void) {
   const size_t        capacity = JSON_OBJECT_SIZE(4) + 500;
   DynamicJsonDocument responseDoc(capacity);
 
-  // TODO
   bool res = requestJsonApi(responseDoc,
                             DeserializationOption::Filter(_presenceFilter),
                             "https://graph.microsoft.com/v1.0/me/presence",
@@ -874,8 +861,7 @@ void ESP32MSGraph::setAnimation(uint8_t segment, uint8_t mode, uint32_t color, u
   // Support only one segment for the moment
   if (segment == 0) {
     startLed = 0;
-    // endLed   = numberLeds;
-    endLed = ws2812fx.getLength();
+    endLed   = ws2812fx.getLength();
   }
 
   log_i("setAnimation: %d, %d-%d, Mode: %d, Color: %d, Speed: %d", segment, startLed, endLed, mode, color, speed);
@@ -884,7 +870,7 @@ void ESP32MSGraph::setAnimation(uint8_t segment, uint8_t mode, uint32_t color, u
 }
 
 // user method...
-//  - Activity
+//  Activity
 //  Available,
 //  Away,
 //  BeRightBack,

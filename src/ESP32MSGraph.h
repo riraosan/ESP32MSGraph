@@ -115,7 +115,6 @@ protected:
   bool   exists(String path);
 
   // preference
-  //void onConfigSaved(void);
   bool loadContext(void);
   void saveContext(void);
   void removeContext(void);

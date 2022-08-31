@@ -13,8 +13,6 @@
  * If I have seen further it is by standing on the shoulders of giants.
  */
 
-
-
 #include "driver/rmt.h"
 #include <Arduino.h>
 #include "ESP32_RMT_Driver.h"
