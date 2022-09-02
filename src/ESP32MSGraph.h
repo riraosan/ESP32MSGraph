@@ -40,8 +40,9 @@ Contributors:
 #define SMODEDEVICELOGINSTARTED   10  // Device login flow was started
 #define SMODEDEVICELOGINFAILED    11  // Device login flow failed
 #define SMODEAUTHREADY            20  // Authentication successful
-#define SMODEPOLLPRESENCE         21  // Poll for presence
 #define SMODEREFRESHTOKEN         22  // Access token needs refresh
+// TODO
+#define SMODEPOLLPRESENCE         21  // Poll for presence
 #define SMODEPRESENCEREQUESTERROR 23  // Access token needs refresh
 
 class ESP32MSGraph {
@@ -75,6 +76,7 @@ public:
   void pollPresence(void);
 
   // LED(VIEW)
+  // TODO del setAnimation
   void setAnimation(uint8_t segment, uint8_t mode = 0, uint32_t color = 0, uint16_t speed = 3000, bool reverse = false);
   void setPresenceAnimation(void);
 
@@ -100,12 +102,14 @@ public:
     _paramPollIntervalValue = interval;
   }
 
+  // TODO
   void setNumLedsValue(String lednum) {
     _paramNumLedsValue = lednum;
   }
 
 protected:
   // controller
+  // TODO
   void statemachine(void);
 
   // for WebUI
@@ -137,6 +141,7 @@ private:
   String _paramClientIdValue;
   String _paramTenantValue;
   String _paramPollIntervalValue;
+  // TODO
   String _paramNumLedsValue;
 
   String access_token;
@@ -147,6 +152,7 @@ private:
   String  device_code;
   uint8_t interval;
 
+  // TODO
   String  availability;
   String  activity;
   uint8_t _retries;

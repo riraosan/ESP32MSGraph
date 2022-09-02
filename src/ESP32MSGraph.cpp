@@ -811,6 +811,7 @@ void ESP32MSGraph::saveContext(void) {
   // log_d("%s", contextDoc.as<String>().c_str());
 }
 
+// TODO
 // Get presence information
 // user method
 void ESP32MSGraph::pollPresence(void) {
@@ -849,10 +850,12 @@ void ESP32MSGraph::pollPresence(void) {
     activity     = responseDoc["activity"].as<String>();
     _retries     = 0;
 
+    // TODO
     setPresenceAnimation();
   }
 }
 
+// TODO
 // Neopixel control
 // user method
 void ESP32MSGraph::setAnimation(uint8_t segment, uint8_t mode, uint32_t color, uint16_t speed, bool reverse) {
@@ -869,23 +872,24 @@ void ESP32MSGraph::setAnimation(uint8_t segment, uint8_t mode, uint32_t color, u
   ws2812fx.setSegment(segment, startLed, endLed, mode, color, speed, reverse);
 }
 
-// user method...
-//  Activity
-//  Available,
-//  Away,
-//  BeRightBack,
-//  Busy,
-//  DoNotDisturb,
-//  InACall,
-//  InAConferenceCall,
-//  Inactive,
-//  InAMeeting,
-//  Offline,
-//  OffWork,
-//  OutOfOffice,
-//  PresenceUnknown,
-//  Presenting,
-//  UrgentInterruptionsOnly
+// TODO
+//  user method...
+//   Activity
+//   Available,
+//   Away,
+//   BeRightBack,
+//   Busy,
+//   DoNotDisturb,
+//   InACall,
+//   InAConferenceCall,
+//   Inactive,
+//   InAMeeting,
+//   Offline,
+//   OffWork,
+//   OutOfOffice,
+//   PresenceUnknown,
+//   Presenting,
+//   UrgentInterruptionsOnly
 void ESP32MSGraph::setPresenceAnimation() {
   if (activity.equals("Available")) {
     setAnimation(0, FX_MODE_STATIC, GREEN);
