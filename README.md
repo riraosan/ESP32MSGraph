@@ -1,13 +1,12 @@
 # ESP32MSGraph Library
 
-
+in progress.
 ## Summary
 
-//TODO
+This library provides an easy login process to AzureAD. I had also included a sample that displays Teams presence.
 ## Devices
 
-//TODO
-
+M5Stack ATOM Lite / MATRIX and M5Stack series
 
 ## How to build
 
@@ -36,8 +35,6 @@ MIT License
 Feel free to modify or reprint. We would appreciate it if you could reprint the URL of this repository.
 
 ## Acknowledgements
-
-//TODO
 
 If I could look out over the distance, it was on the shoulders of giants.
 We would like to thank the authors of each library. Thank you very much.
