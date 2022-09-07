@@ -1,11 +1,11 @@
 /*
-ESP32MSGraph Library
+Documents Library
 
 Original Source:
 https://github.com/toblum/ESPTeamsPresence
 
 Licence:
-[MIT](https://github.com/riraosan/ESP32MSGraph/blob/master/LICENSE)
+[MIT](https://github.com/riraosan/Documents/blob/master/LICENSE)
 
 Author:
 refactored by
@@ -29,9 +29,9 @@ Contributors:
 #include <SPIFFS.h>
 
 // from github
-#include <IotWebConf.h>
+//#include <IotWebConf.h>
 #include <ArduinoJson.h>
-#include <WS2812FX.h>
+//#include <WS2812FX.h>
 
 // State
 #define SMODEINITIAL              0   // Initial
@@ -45,24 +45,24 @@ Contributors:
 #define SMODEPOLLPRESENCE         21  // Poll for presence
 #define SMODEPRESENCEREQUESTERROR 23  // Access token needs refresh
 
-class ESP32MSGraph {
+class Documents {
 public:
-  // ESP32MSGraph(void) {}
-  ESP32MSGraph(IotWebConf *config, WebServer *server) : _server(server),
-                                                        _iotWebConf(config),
-                                                        _state(SMODEINITIAL),
-                                                        _laststate(SMODEINITIAL),
-                                                        _tsPolling(0),
-                                                        _expires(0),
-                                                        interval(5),
-                                                        _retries(0),
-                                                        _lastIotWebConfState(0) {
+  // Documents(void) {}
+  Documents(WebServer *server) : _server(server),
+                                 //_iotWebConf(config),
+                                 //_state(SMODEINITIAL),
+                                 _laststate(SMODEINITIAL),
+                                 _tsPolling(0),
+                                 _expires(0),
+                                 _interval(5),
+                                 _retries(0),
+                                 _lastIotWebConfState(0) {
     deserializeJson(_loginFilter, loginFilter);
     deserializeJson(_refleshtokenFilter, refleshtokenFilter);
     deserializeJson(_presenceFilter, presenceFilter);
   }
 
-  ~ESP32MSGraph(void) {}
+  ~Documents(void) {}
 
   void update(void) {
     statemachine();
@@ -130,11 +130,13 @@ protected:
   int getTokenLifetime(void);
 
 private:
-  WebServer  *_server;
-  IotWebConf *_iotWebConf;
+  //WebServer *_server;
+  //TODO 非同期Webサーバーへ変更すること
 
-  uint8_t       _state;
-  uint8_t       _laststate;
+  // IotWebConf *_iotWebConf;
+
+  // uint8_t       _state;
+  // uint8_t       _laststate;
   unsigned long _tsPolling;
   unsigned int  _expires;
 
@@ -144,13 +146,13 @@ private:
   // TODO
   String _paramNumLedsValue;
 
-  String access_token;
-  String refresh_token;
-  String id_token;
+  String _access_token;
+  String _refresh_token;
+  String _id_token;
 
-  String  user_code;
-  String  device_code;
-  uint8_t interval;
+  String  _user_code;
+  String  _device_code;
+  uint8_t _interval;
 
   // TODO
   String  availability;

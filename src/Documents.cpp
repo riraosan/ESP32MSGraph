@@ -1,11 +1,11 @@
 /*
-ESP32MSGraph Library
+Documents Library
 
 Original Source:
 https://github.com/toblum/ESPTeamsPresence
 
 Licence:
-[MIT](https://github.com/riraosan/ESP32MSGraph/blob/master/LICENSE)
+[MIT](https://github.com/riraosan/Documents/blob/master/LICENSE)
 
 Author:
 refactored by
@@ -32,7 +32,7 @@ Contributors:
 
 #include <config.h>
 #include <filter.h>
-#include <ESP32MSGraph.h>
+#include <Documents.h>
 
 extern IotWebConfParameter _paramClientId;
 extern IotWebConfParameter _paramTenant;
@@ -103,11 +103,11 @@ MrY=
 )";
 #endif
 
-int ESP32MSGraph::getTokenLifetime() {
+int Documents::getTokenLifetime() {
   return (_expires - millis()) / 1000;
 }
 
-void ESP32MSGraph::removeContext() {
+void Documents::removeContext() {
   SPIFFS.remove(CONTEXT_FILE);
   log_d("removeContext() - Success");
 }
@@ -115,7 +115,7 @@ void ESP32MSGraph::removeContext() {
 /**
  * API request handler
  */
-bool ESP32MSGraph::requestJsonApi(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter filter, String url, String payload, String type, bool sendAuth) {
+bool Documents::requestJsonApi(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter filter, String url, String payload, String type, bool sendAuth) {
   std::unique_ptr<WiFiClientSecure> client(new WiFiClientSecure);
 
 #ifndef DISABLECERTCHECK
@@ -188,7 +188,7 @@ bool ESP32MSGraph::requestJsonApi(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filt
   return false;
 }
 
-void ESP32MSGraph::handleRoot() {
+void Documents::handleRoot() {
   log_d("handleRoot()");
   // -- Let IotWebConf test and handle captive portal requests.
   if (_iotWebConf->handleCaptivePortal()) {
@@ -319,7 +319,7 @@ Go to <a href="config">configuration page</a> to change settings.
   _server->send(200, "text/html", response);
 }
 
-void ESP32MSGraph::handleGetSettings() {
+void Documents::handleGetSettings() {
   log_d("handleGetSettings()");
 
   const int capacity = JSON_OBJECT_SIZE(13);
@@ -347,7 +347,7 @@ void ESP32MSGraph::handleGetSettings() {
 }
 
 // Delete EEPROM by removing the trailing sequence, remove context file
-void ESP32MSGraph::handleClearSettings() {
+void Documents::handleClearSettings() {
   log_d("handleClearSettings()");
 
   for (int t = 0; t < 4; t++) {
@@ -360,7 +360,7 @@ void ESP32MSGraph::handleClearSettings() {
   ESP.restart();
 }
 
-void ESP32MSGraph::startDevicelogin() {
+void Documents::startDevicelogin() {
   // Only if not already started
   if (_state != SMODEDEVICELOGINSTARTED) {
     log_d("handleStartDevicelogin()");
@@ -374,10 +374,10 @@ void ESP32MSGraph::startDevicelogin() {
                               "client_id=" + _paramClientIdValue + "&scope=offline_access%20openid%20Presence.Read");
 
     if (res && doc.containsKey("device_code") && doc.containsKey("user_code") && doc.containsKey("interval") && doc.containsKey("verification_uri") && doc.containsKey("message")) {
-      // Save device_code, user_code and interval
-      device_code = doc["device_code"].as<String>();
-      user_code   = doc["user_code"].as<String>();
-      interval    = doc["interval"].as<unsigned int>();
+      // Save _device_code, _user_code and _interval
+      _device_code = doc["device_code"].as<String>();
+      _user_code   = doc["user_code"].as<String>();
+      _interval    = doc["interval"].as<unsigned int>();
 
       // Prepare response JSON
       DynamicJsonDocument responseDoc(JSON_OBJECT_SIZE(3));
@@ -387,7 +387,7 @@ void ESP32MSGraph::startDevicelogin() {
 
       // Set state, update polling timestamp
       _state     = SMODEDEVICELOGINSTARTED;
-      _tsPolling = millis() + (interval * 1000);
+      _tsPolling = millis() + (_interval * 1000);
 
       // Send JSON response
       _server->send(200, "application/json", responseDoc.as<String>());
@@ -402,7 +402,7 @@ void ESP32MSGraph::startDevicelogin() {
 /**
  * SPIFFS webserver
  */
-bool ESP32MSGraph::exists(String path) {
+bool Documents::exists(String path) {
   bool yes  = false;
   File file = SPIFFS.open(path, "r");
   if (!file.isDirectory()) {
@@ -412,7 +412,7 @@ bool ESP32MSGraph::exists(String path) {
   return yes;
 }
 
-void ESP32MSGraph::handleMinimalUpload() {
+void Documents::handleMinimalUpload() {
   _server->sendHeader("Access-Control-Allow-Origin", "*");
   _server->send(200, "text/html", "<!DOCTYPE html>\
 			<html>\
@@ -432,7 +432,7 @@ void ESP32MSGraph::handleMinimalUpload() {
 			</html>");
 }
 
-void ESP32MSGraph::handleFileUpload() {
+void Documents::handleFileUpload() {
   File        fsUploadFile;
   HTTPUpload& upload = _server->upload();
   if (upload.status == UPLOAD_FILE_START) {
@@ -456,7 +456,7 @@ void ESP32MSGraph::handleFileUpload() {
   }
 }
 
-void ESP32MSGraph::handleFileDelete() {
+void Documents::handleFileDelete() {
   if (_server->args() == 0) {
     return _server->send(500, "text/plain", "BAD ARGS");
   }
@@ -473,7 +473,7 @@ void ESP32MSGraph::handleFileDelete() {
   path = String();
 }
 
-void ESP32MSGraph::handleFileList() {
+void Documents::handleFileList() {
   if (!_server->hasArg("dir")) {
     _server->send(500, "text/plain", "BAD ARGS");
     return;
@@ -503,7 +503,7 @@ void ESP32MSGraph::handleFileList() {
   _server->send(200, "text/json", output);
 }
 
-String ESP32MSGraph::getContentType(String filename) {
+String Documents::getContentType(String filename) {
   if (_server->hasArg("download")) {
     return "application/octet-stream";
   } else if (filename.endsWith(".htm")) {
@@ -534,7 +534,7 @@ String ESP32MSGraph::getContentType(String filename) {
   return "text/plain";
 }
 
-bool ESP32MSGraph::handleFileRead(String path) {
+bool Documents::handleFileRead(String path) {
   log_d("handleFileRead: %s", path);
   if (path.endsWith("/")) {
     path += "index.htm";
@@ -554,8 +554,8 @@ bool ESP32MSGraph::handleFileRead(String path) {
 }
 
 // Poll for access token
-void ESP32MSGraph::pollForToken(void) {
-  String payload = "client_id=" + String(_paramClientIdValue) + "&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=" + device_code;
+void Documents::pollForToken(void) {
+  String payload = "client_id=" + String(_paramClientIdValue) + "&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=" + _device_code;
 
   DynamicJsonDocument responseDoc(JSON_OBJECT_SIZE(7) + 5000);
 
@@ -581,7 +581,7 @@ void ESP32MSGraph::pollForToken(void) {
       // Save tokens and expiration
       unsigned int _expires_in = responseDoc["expires_in"].as<unsigned int>();
       access_token             = responseDoc["access_token"].as<String>();
-      refresh_token            = responseDoc["refresh_token"].as<String>();
+      _refresh_token           = responseDoc["refresh_token"].as<String>();
       id_token                 = responseDoc["id_token"].as<String>();
       _expires                 = millis() + (_expires_in * 1000);  // Calculate timestamp when token _expires
 
@@ -596,7 +596,7 @@ void ESP32MSGraph::pollForToken(void) {
 }
 
 // Refresh the access token
-bool ESP32MSGraph::refreshToken(void) {
+bool Documents::refreshToken(void) {
   bool success = false;
   // See: https://docs.microsoft.com/de-de/azure/active-directory/develop/v1-protocols-oauth-code#refreshing-the-access-tokens
   String payload = "client_id=" + _paramClientIdValue + "&grant_type=refresh_token&refresh_token=" + refresh_token;
@@ -616,8 +616,8 @@ bool ESP32MSGraph::refreshToken(void) {
       success      = true;
     }
     if (!responseDoc["refresh_token"].isNull()) {
-      refresh_token = responseDoc["refresh_token"].as<String>();
-      success       = true;
+      _refresh_token = responseDoc["refresh_token"].as<String>();
+      success        = true;
     }
     if (!responseDoc["id_token"].isNull()) {
       id_token = responseDoc["id_token"].as<String>();
@@ -638,7 +638,7 @@ bool ESP32MSGraph::refreshToken(void) {
 }
 
 // Implementation of a statemachine to handle the different application states
-void ESP32MSGraph::statemachine(void) {
+void Documents::statemachine(void) {
   // Statemachine: Check states of iotWebConf to detect AP mode and WiFi Connection attempt
   byte iotWebConfState = _iotWebConf->getState();
   if (iotWebConfState != _lastIotWebConfState) {
@@ -676,7 +676,7 @@ void ESP32MSGraph::statemachine(void) {
     }
     if (millis() >= _tsPolling) {
       pollForToken();
-      _tsPolling = millis() + (interval * 1000);
+      _tsPolling = millis() + (_interval * 1000);
       log_d("pollForToken");
     }
   }
@@ -744,7 +744,7 @@ void ESP32MSGraph::statemachine(void) {
   }
 }
 
-bool ESP32MSGraph::loadContext(void) {
+bool Documents::loadContext(void) {
   File    file    = SPIFFS.open(CONTEXT_FILE);
   boolean success = false;
 
@@ -768,7 +768,7 @@ bool ESP32MSGraph::loadContext(void) {
           numSettings++;
         }
         if (!contextDoc["refresh_token"].isNull()) {
-          refresh_token = contextDoc["refresh_token"].as<String>();
+          _refresh_token = contextDoc["refresh_token"].as<String>();
           numSettings++;
         }
         if (!contextDoc["id_token"].isNull()) {
@@ -797,12 +797,12 @@ bool ESP32MSGraph::loadContext(void) {
 }
 
 // Save context information to file in SPIFFS
-void ESP32MSGraph::saveContext(void) {
+void Documents::saveContext(void) {
   const size_t        capacity = JSON_OBJECT_SIZE(3) + 5000;
   DynamicJsonDocument contextDoc(capacity);
-  contextDoc["access_token"]  = access_token.c_str();
-  contextDoc["refresh_token"] = refresh_token.c_str();
-  contextDoc["id_token"]      = id_token.c_str();
+  contextDoc["access_token"]  = _access_token.c_str();
+  contextDoc["refresh_token"] = _refresh_token.c_str();
+  contextDoc["id_token"]      = _id_token.c_str();
 
   File   contextFile  = SPIFFS.open(CONTEXT_FILE, FILE_WRITE);
   size_t bytesWritten = serializeJsonPretty(contextDoc, contextFile);
@@ -814,7 +814,7 @@ void ESP32MSGraph::saveContext(void) {
 // TODO
 // Get presence information
 // user method
-void ESP32MSGraph::pollPresence(void) {
+void Documents::pollPresence(void) {
   log_d("pollPresence()");
   // See: https://github.com/microsoftgraph/microsoft-graph-docs/blob/ananya/api-reference/beta/resources/presence.md
   const size_t        capacity = JSON_OBJECT_SIZE(4) + 500;
@@ -858,7 +858,7 @@ void ESP32MSGraph::pollPresence(void) {
 // TODO
 // Neopixel control
 // user method
-void ESP32MSGraph::setAnimation(uint8_t segment, uint8_t mode, uint32_t color, uint16_t speed, bool reverse) {
+void Documents::setAnimation(uint8_t segment, uint8_t mode, uint32_t color, uint16_t speed, bool reverse) {
   uint16_t startLed, endLed = 0;
 
   // Support only one segment for the moment
@@ -890,7 +890,7 @@ void ESP32MSGraph::setAnimation(uint8_t segment, uint8_t mode, uint32_t color, u
 //   PresenceUnknown,
 //   Presenting,
 //   UrgentInterruptionsOnly
-void ESP32MSGraph::setPresenceAnimation() {
+void Documents::setPresenceAnimation() {
   if (activity.equals("Available")) {
     setAnimation(0, FX_MODE_STATIC, GREEN);
   }

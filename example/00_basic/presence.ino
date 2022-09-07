@@ -1,11 +1,11 @@
 /*
-ESP32MSGraph Library Presence Sample
+Documents Library Presence Sample
 
 Original Source:
 https://github.com/toblum/ESPTeamsPresence
 
 Licence:
-[MIT](https://github.com/riraosan/ESP32MSGraph/blob/master/LICENSE)
+[MIT](https://github.com/riraosan/Documents/blob/master/LICENSE)
 
 Author:
 refactored by
@@ -30,11 +30,11 @@ Contributors:
 #include <WS2812FX.h>
 
 #include <ESP32_RMT_Driver.h>
-#include <ESP32MSGraph.h>
+#include <Documents.h>
 #include <config.h>
 #include <filter.h>
 
-constexpr char thingName[]             = "ESP32MSGraph";  // SSID
+constexpr char thingName[]             = "Documents";     // SSID
 constexpr char wifiInitialApPassword[] = "12345678";      // password
 
 #define STRING_LEN  64
@@ -53,7 +53,7 @@ IotWebConfParameter paramNumLeds;
 DNSServer        dnsServer;
 WebServer        server(80);
 IotWebConf       iotWebConf(thingName, &dnsServer, &server, wifiInitialApPassword);
-ESP32MSGraph     graph(&iotWebConf, &server);
+Documents        graph(&iotWebConf, &server);
 ESP32_RMT_Driver blinker;
 HTTPUpdateServer httpUpdater;
 

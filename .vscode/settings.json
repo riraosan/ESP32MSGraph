@@ -85,7 +85,14 @@
         "typeinfo": "cpp",
         "esp32_rmt_driver.h": "c",
         "rmt.h": "c",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "atomic": "cpp",
+        "codecvt": "cpp",
+        "condition_variable": "cpp",
+        "csignal": "cpp",
+        "future": "cpp",
+        "iostream": "cpp",
+        "mutex": "cpp"
     },
     "markdown-pdf.styles": [
         ""
