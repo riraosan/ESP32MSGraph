@@ -1,11 +1,11 @@
 /*
-Documents Library
+Document Library
 
 Original Source:
 https://github.com/toblum/ESPTeamsPresence
 
 Licence:
-[MIT](https://github.com/riraosan/Documents/blob/master/LICENSE)
+[MIT](https://github.com/riraosan/ESP32MSGraph/blob/master/LICENSE)
 
 Author:
 refactored by
@@ -45,27 +45,27 @@ Contributors:
 #define SMODEPOLLPRESENCE         21  // Poll for presence
 #define SMODEPRESENCEREQUESTERROR 23  // Access token needs refresh
 
-class Documents {
+class Document {
 public:
-  // Documents(void) {}
-  Documents(WebServer *server) : _server(server),
-                                 //_iotWebConf(config),
-                                 //_state(SMODEINITIAL),
-                                 _laststate(SMODEINITIAL),
-                                 _tsPolling(0),
-                                 _expires(0),
-                                 _interval(5),
-                                 _retries(0),
-                                 _lastIotWebConfState(0) {
+  // Document(void) {}
+  Document(WebServer *server) : _server(server),
+                                //_iotWebConf(config),
+                                //_state(SMODEINITIAL),
+                                //_laststate(SMODEINITIAL),
+                                _tsPolling(0),
+                                _expires(0),
+                                _interval(5),
+                                _retries(0),
+                                _lastIotWebConfState(0) {
     deserializeJson(_loginFilter, loginFilter);
     deserializeJson(_refleshtokenFilter, refleshtokenFilter);
     deserializeJson(_presenceFilter, presenceFilter);
   }
 
-  ~Documents(void) {}
+  ~Document(void) {}
 
   void update(void) {
-    statemachine();
+    // statemachine();
   }
 
   void changeState(uint8_t state) {
@@ -82,7 +82,6 @@ public:
 
   void handleRoot(void);
   void handleMinimalUpload(void);
-  void startDevicelogin(void);
   void handleGetSettings(void);
   void handleClearSettings(void);
   void handleFileDelete(void);
@@ -110,7 +109,7 @@ public:
 protected:
   // controller
   // TODO
-  void statemachine(void);
+  // void statemachine(void);
 
   // for WebUI
   // API request handler
@@ -126,12 +125,13 @@ protected:
   // for Azure AD login
   void pollForToken(void);
   bool refreshToken(void);
+  void startDevicelogin(void);
 
   int getTokenLifetime(void);
 
 private:
-  //WebServer *_server;
-  //TODO 非同期Webサーバーへ変更すること
+  // WebServer *_server;
+  // TODO 非同期Webサーバーへ変更すること
 
   // IotWebConf *_iotWebConf;
 
