@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-class ESP32MSGraph : public Documents {
+class ESP32MSGraph {
 public:
   ESP32MSGraph(void) {
   }
@@ -11,45 +11,29 @@ public:
   }
 
   void begin(void) {
-    //ここにパブリッシャー（発行者：Document）とサブスクライバー（購読者：View）を生成する（Document-View and State)
-    pub.begin(&subscriber);
-  }
+    _led.reset(new ViewLED);
+    //_html.reset(new ViewHTML);
+    _doc.reset(new Document);
 
-  void update(void) {
-    //ここにパブリッシャーのupdateメソッドをコールする
-    pub.update();
+    _doc.attachSubscriber(_led);
+    //_jsondoc.attachSubscriber(_html);
+
+    //コンテキストを作成する
+    _context.reset(new Context);
+
+    _context.attachState(new StateInitialize(_doc));  // State start
+    //_context.attachState(new StateWiFiConnecting(_doc));  // Wait for wifi connection
+    //_context.attachState(new StateWiFiConnection(_doc)); // Wifi connected SMODEWIFICONNECTED
+    //_context.attachState(new StateWiFiConnection(_doc)); // Device login flow was started SMODEDEVICELOGINSTARTED
+    //_context.attachState(new StateWiFiConnection(_doc)); // Device login flow failed SMODEDEVICELOGINFAILED
+    //_context.attachState(new StateWiFiConnection(_doc)); // Authentication successful SMODEAUTHREADY
+    //_context.attachState(new StateWiFiConnection(_doc)); // Access token needs refresh SMODEREFRESHTOKEN
   }
 
 private:
-  State     *_state;
-  WebServer *_server;
-  View      *subscriber;  //観察
+  std::unique_ptr<Context> _context;
+
+  std::unique_ptr<ViewLED>   _led;
+  std::unique_ptr<ViewHTML>  _html;
+  std::unique_ptr<Doccument> _doc;
 };
-
-
-
-
-ESP32MSGraph graph;//ステートマシンと意味づけすること
-
-std::unique_ptr<ViewLED>   _led;
-std::unique_ptr<ViewHTML>  _html;
-std::unique_ptr<Doccument> _jsondoc;
-
-void setup(void) {
-  _led.reset(new ViewLED);
-  _html.reset(new ViewHTML);
-
-  _jsondoc.attachSubscriber(_led);
-  _jsondoc.attachSubscriber(_html);
-
-  _state.reset(new State);
-
-  _state.attachPublisher(_jsondoc);
-  _state.attachWiFi(_wifi);
-}
-
-void loop(void){
-  _state.update()//状態遷移する
-}
-
-*/
