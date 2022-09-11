@@ -33,6 +33,8 @@ Contributors:
 #include <ArduinoJson.h>
 //#include <WS2812FX.h>
 
+#include <Connect.hpp>
+
 // State
 #define SMODEINITIAL              0   // Initial
 #define SMODEWIFICONNECTING       1   // Wait for wifi connection
@@ -49,9 +51,6 @@ class Document {
 public:
   // Document(void) {}
   Document(WebServer *server) : _server(server),
-                                //_iotWebConf(config),
-                                //_state(SMODEINITIAL),
-                                //_laststate(SMODEINITIAL),
                                 _tsPolling(0),
                                 _expires(0),
                                 _interval(5),
@@ -130,10 +129,7 @@ protected:
   int getTokenLifetime(void);
 
 private:
-  // WebServer *_server;
-  // TODO 非同期Webサーバーへ変更すること
-
-  // IotWebConf *_iotWebConf;
+  Connect _connect;
 
   // uint8_t       _state;
   // uint8_t       _laststate;
@@ -144,7 +140,7 @@ private:
   String _paramTenantValue;
   String _paramPollIntervalValue;
   // TODO
-  String _paramNumLedsValue;
+  // String _paramNumLedsValue;
 
   String _access_token;
   String _refresh_token;
@@ -155,10 +151,10 @@ private:
   uint8_t _interval;
 
   // TODO
-  String  availability;
-  String  activity;
+  // String  availability;
+  // String  activity;
   uint8_t _retries;
-  byte    _lastIotWebConfState;
+  // byte    _lastIotWebConfState;
 
   StaticJsonDocument<200> _loginFilter;         //初回ログインに使用
   StaticJsonDocument<200> _tokenFilter;         //トークン取得に使用

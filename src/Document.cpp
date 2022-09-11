@@ -32,7 +32,7 @@ Contributors:
 
 #include <config.h>
 #include <filter.h>
-#include <Documents.h>
+#include <Document.h>
 
 extern IotWebConfParameter _paramClientId;
 extern IotWebConfParameter _paramTenant;
@@ -195,102 +195,102 @@ void Documents::handleRoot() {
     return;
   }
 
-  String response = R"(
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
-<link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
-<link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
-<style type="text/css">
-  body {padding:3.5rem}
-  .ml-s {margin-left:1.0rem}
-  .mt-s {margin-top:1.0rem}
-  .mt {margin-top:3.5rem}
-  #dialog-devicelogin{max-width : 800px }
-</style>
-<script>
+  //   String response = R"(
+  // <!DOCTYPE html>
+  // <html lang="en">
+  // <head>
+  // <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+  // <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
+  // <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
+  // <style type="text/css">
+  //   body {padding:3.5rem}
+  //   .ml-s {margin-left:1.0rem}
+  //   .mt-s {margin-top:1.0rem}
+  //   .mt {margin-top:3.5rem}
+  //   #dialog-devicelogin{max-width : 800px }
+  // </style>
+  // <script>
 
-function closeDeviceLoginModal() {
-  document.getElementById('dialog-devicelogin').close();
-}
+  // function closeDeviceLoginModal() {
+  //   document.getElementById('dialog-devicelogin').close();
+  // }
 
-function performClearSettings() {
-  fetch('/api/clearSettings').then(r => r.json()).then(data => {
-    console.log('clearSettings', data);
-    document.getElementById('dialog-clearsettings').close();
-    document.getElementById('dialog-clearsettings-result').showModal();
-  });
-}
+  // function performClearSettings() {
+  //   fetch('/api/clearSettings').then(r => r.json()).then(data => {
+  //     console.log('clearSettings', data);
+  //     document.getElementById('dialog-clearsettings').close();
+  //     document.getElementById('dialog-clearsettings-result').showModal();
+  //   });
+  // }
 
-function openDeviceLoginModal() {
-  fetch('/api/startDevicelogin').then(r => r.json()).then(data => {
-    console.log('startDevicelogin', data);
-    if (data && data.user_code) {
-      document.getElementById('btn_open').href         = data.verification_uri;
-      document.getElementById('lbl_message').innerText = data.message;
-      document.getElementById('code_field').value      = data.user_code;
-    }
-    document.getElementById('dialog-devicelogin').showModal();
-  });
-}
+  // function openDeviceLoginModal() {
+  //   fetch('/api/startDevicelogin').then(r => r.json()).then(data => {
+  //     console.log('startDevicelogin', data);
+  //     if (data && data.user_code) {
+  //       document.getElementById('btn_open').href         = data.verification_uri;
+  //       document.getElementById('lbl_message').innerText = data.message;
+  //       document.getElementById('code_field').value      = data.user_code;
+  //     }
+  //     document.getElementById('dialog-devicelogin').showModal();
+  //   });
+  // }
 
-</script>
-<title>ESP32 teams presence</title>
-</head>
-<body>
-<h2>ESP32 Teams Presence - Ver.__VERSION__ </h2>
+  // </script>
+  // <title>ESP32 teams presence</title>
+  // </head>
+  // <body>
+  // <h2>ESP32 Teams Presence - Ver.__VERSION__ </h2>
 
-<section class="mt"><div class="nes-balloon from-left">
-__MESSAGE__
-__BUTTON__
+  // <section class="mt"><div class="nes-balloon from-left">
+  // __MESSAGE__
+  // __BUTTON__
 
-<dialog class="nes-dialog is-rounded" id="dialog-devicelogin">
-<p class="title">Start device login</p>
-<p id="lbl_message"></p>
-<input type="text" id="code_field"class="nes-input" disabled >
-<menu class="dialog-menu">
-<button id="btn_close" class="nes-btn" onclick="closeDeviceLoginModal();">Close</button>
-<a class="nes-btn is-primary ml-s" id="btn_open" href="https://microsoft.com/devicelogin" target="_blank">Open device login</a>
-</menu>
-</dialog>
+  // <dialog class="nes-dialog is-rounded" id="dialog-devicelogin">
+  // <p class="title">Start device login</p>
+  // <p id="lbl_message"></p>
+  // <input type="text" id="code_field"class="nes-input" disabled >
+  // <menu class="dialog-menu">
+  // <button id="btn_close" class="nes-btn" onclick="closeDeviceLoginModal();">Close</button>
+  // <a class="nes-btn is-primary ml-s" id="btn_open" href="https://microsoft.com/devicelogin" target="_blank">Open device login</a>
+  // </menu>
+  // </dialog>
 
-</section>
-<div class="nes-balloon from-left mt">
-Go to <a href="config">configuration page</a> to change settings.
-</div>
-<section class="nes-container with-title"><h3 class="title">Current settings</h3>
-<div class=" nes-field mt-s "><label for=" name_field ">Client-ID</label><input type=" text " id=" name_field " class=" nes-input " disabled value=__CLIENTID__ ></div>
-<div class=" nes-field mt-s "><label for=" name_field ">Tenant hostname / ID</label><input type=" text " id=" name_field " class=" nes-input " disabled value=__TENANTVALUE__ ></div>
-<div class=" nes-field mt-s "><label for=" name_field ">Polling interval (sec)</label><input type=" text " id=" name_field " class=" nes-input " disabled value=__POLLVALUE__ ></div>
-<div class=" nes-field mt-s "><label for=" name_field ">Number of LEDs</label><input type=" text " id=" name_field " class=" nes-input " disabled value=__LEDSVALUE__ ></div>
-</section>
+  // </section>
+  // <div class="nes-balloon from-left mt">
+  // Go to <a href="config">configuration page</a> to change settings.
+  // </div>
+  // <section class="nes-container with-title"><h3 class="title">Current settings</h3>
+  // <div class=" nes-field mt-s "><label for=" name_field ">Client-ID</label><input type=" text " id=" name_field " class=" nes-input " disabled value=__CLIENTID__ ></div>
+  // <div class=" nes-field mt-s "><label for=" name_field ">Tenant hostname / ID</label><input type=" text " id=" name_field " class=" nes-input " disabled value=__TENANTVALUE__ ></div>
+  // <div class=" nes-field mt-s "><label for=" name_field ">Polling interval (sec)</label><input type=" text " id=" name_field " class=" nes-input " disabled value=__POLLVALUE__ ></div>
+  // <div class=" nes-field mt-s "><label for=" name_field ">Number of LEDs</label><input type=" text " id=" name_field " class=" nes-input " disabled value=__LEDSVALUE__ ></div>
+  // </section>
 
-<section class="nes-container with-title mt"><h3 class="title">Memory usage</h3>
-<div>Sketch: __SKETCHSIZE__ of __FREESKETCHSPACE__ bytes free</div>
-<progress class="nes-progress" value="__SKETCHSIZE__" max="__FREESKETCHSPACE__"></progress>
-<div class="mt-s">RAM: __FREEHEAP__ of 327680 bytes free</div>
-<progress class="nes-progress" value="__USEDHEAP__" max="327680"></progress>
-</section>
+  // <section class="nes-container with-title mt"><h3 class="title">Memory usage</h3>
+  // <div>Sketch: __SKETCHSIZE__ of __FREESKETCHSPACE__ bytes free</div>
+  // <progress class="nes-progress" value="__SKETCHSIZE__" max="__FREESKETCHSPACE__"></progress>
+  // <div class="mt-s">RAM: __FREEHEAP__ of 327680 bytes free</div>
+  // <progress class="nes-progress" value="__USEDHEAP__" max="327680"></progress>
+  // </section>
 
-<section class="nes-container with-title mt"><h3 class="title">Danger area</h3>
-<dialog class="nes-dialog is-rounded" id="dialog-clearsettings">
-<p class="title">Really clear all settings?</p>
-<button class="nes-btn" onclick="document.getElementById('dialog-clearsettings').close();">Close</button>
-<button class="nes-btn is-error" onclick="performClearSettings();">Clear all settings</button>
-</dialog>
-<dialog class="nes-dialog is-rounded" id="dialog-clearsettings-result">
-<p class="title">All settings were cleared.</p>
-</dialog>
-<div><button type="button" class="nes-btn is-error" onclick="document.getElementById('dialog-clearsettings').showModal();">Clear all settings</button></div>
-</section>
+  // <section class="nes-container with-title mt"><h3 class="title">Danger area</h3>
+  // <dialog class="nes-dialog is-rounded" id="dialog-clearsettings">
+  // <p class="title">Really clear all settings?</p>
+  // <button class="nes-btn" onclick="document.getElementById('dialog-clearsettings').close();">Close</button>
+  // <button class="nes-btn is-error" onclick="performClearSettings();">Clear all settings</button>
+  // </dialog>
+  // <dialog class="nes-dialog is-rounded" id="dialog-clearsettings-result">
+  // <p class="title">All settings were cleared.</p>
+  // </dialog>
+  // <div><button type="button" class="nes-btn is-error" onclick="document.getElementById('dialog-clearsettings').showModal();">Clear all settings</button></div>
+  // </section>
 
-<div class="mt">
-<i class=" nes-icon github "></i> Find the <a href="https://github.com/toblum/ESPTeamsPresence" target="_blank">ESPTeamsPresence</a> project on GitHub.</i>
-</div>
-</body>
-</html>
-)";
+  // <div class="mt">
+  // <i class=" nes-icon github "></i> Find the <a href="https://github.com/toblum/ESPTeamsPresence" target="_blank">ESPTeamsPresence</a> project on GitHub.</i>
+  // </div>
+  // </body>
+  // </html>
+  // )";
 
   if (_paramTenantValue.isEmpty() || _paramClientIdValue.isEmpty()) {
     response.replace("__MESSAGE__", R"(<p class="note nes-text is-error">Some settings are missing. Go to <a href="config">configuration page</a> to complete setup.</p></div>)");

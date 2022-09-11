@@ -2,7 +2,7 @@
     //https://clang.llvm.org/docs/ClangFormatStyleOptions.html
     "C_Cpp.clang_format_style": "{BasedOnStyle: Google, AlignConsecutiveAssignments: AcrossComments, ReferenceAlignment: Right, PointerAlignment: Right, IndentCaseLabels: true, AlignConsecutiveDeclarations: true, SortIncludes: Never, IndentWidth: 2, AccessModifierOffset: -2, ColumnLimit: 0, BreakStringLiterals: false, AlignConsecutiveAssignments: true, AlignConsecutiveMacros: AcrossEmptyLinesAndComments, AlwaysBreakBeforeMultilineStrings: false}",
     "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: Google, AlignConsecutiveAssignments: AcrossComments, ReferenceAlignment: Right, PointerAlignment: Right, IndentCaseLabels: true, AlignConsecutiveDeclarations: true, SortIncludes: Never, IndentWidth: 2, AccessModifierOffset: -2, ColumnLimit: 0, BreakStringLiterals: false, AlignConsecutiveAssignments: true, AlignConsecutiveMacros: AcrossEmptyLinesAndComments, AlwaysBreakBeforeMultilineStrings: false}",
-    "editor.formatOnSave": true,
+    "editor.formatOnSave": false,
     "editor.formatOnType": true,
     "editor.formatOnPaste": true,
     "editor.tabSize": 2,
@@ -92,7 +92,9 @@
         "csignal": "cpp",
         "future": "cpp",
         "iostream": "cpp",
-        "mutex": "cpp"
+        "mutex": "cpp",
+        "forward_list": "cpp",
+        "regex": "cpp"
     },
     "markdown-pdf.styles": [
         ""

@@ -2,6 +2,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <Document.h>
 
 class Context;
 
@@ -14,7 +15,8 @@ public:
     this->_context = context;
   }
 
-  virtual void handler() = 0;
+  virtual void action1(void) = 0;
+  virtual void action2(void) = 0;
 
 protected:
   /**
@@ -49,8 +51,12 @@ public:
   /**
    * The Context delegates part of its behavior to the current State object.
    */
-  void request() {
-    this->_state->handler();
+  void request1(void) {
+    this->_state->action1();
+  }
+
+  void request2(void) {
+    this->_state->action2();
   }
 
 private:

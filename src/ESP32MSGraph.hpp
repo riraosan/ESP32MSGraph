@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Arduino.h>
+#include <Document.h>
+#include <loginProcessState.hpp>
 
 class ESP32MSGraph {
 public:
