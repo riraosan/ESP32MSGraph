@@ -8,24 +8,34 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <AutoConnect.h>
+#include <Document.h>
 using WiFiWebServer = WebServer;
 #else
 #error Only for ESP32
 #endif
 
-// TODO コードを受け取るHTMLをはりつけること
-
 class Connect {
 public:
-  Connect() : _portal(_server),
-              _loginconfig("/loginSettings", "Device Login Settings"),
-              _devicelogin("/lauchdevicelogin", "Device Login", false),
-              _header("Device Login Settings"),
-                  _isDetect(false),
-              _isConnect(false),
-              _hostName(F("graph")),
-              _apName(F("ATOM-G-AP")),
-              _httpPort(80) {
+  Connect(Document* doc) : _doc(doc),
+                           _portal(_server),
+                           /*setting page*/
+                           _loginconfig("/loginSettings", "Device Login Settings"),
+                           _header("header", "Device Login Settings"),
+                           _caption("caption", "次の項目を入力して[Get Device Code]ボタンを押してください", "", "", AC_Tag_P),
+                           _clientID("clientID", "", "Client ID", "Client or Generic ID", "e.g. 3837bbf0-30fb-47ad-bce8-f460ba9880c3"),
+                           _tenantID("tenantID", "", "Tenant Hostname or ID", "Tenant Hostname or ID", "e.g. contoso.onmicrosoft.com"),
+                           _getdevicecode("getdevicecode", "Get Device Code", "/getdevicecode"),
+                           /*start login page*/
+                           _devicelogin("/lauchdevicelogin", "Dvice Login", false),  // hidden
+                           _header2("header2", "Device Login"),
+                           _caption2("caption2", "Device Codeをクリップボードにコピーして[Start device login]ボタンを押してください", "", "", AC_Tag_P),
+                           _devicecode("devicecode", "", "Device Code"),
+                           _startlogin("startlogin", "Start device login", "https://microsoft.com/devicelogin"),
+                           _isDetect(false),
+                           _isConnect(false),
+                           _hostName(F("graph")),
+                           _apName(F("ATOM-G-AP")),
+                           _httpPort(80) {
     _content = R"(
 <!DOCTYPE html>
 <html>
@@ -34,6 +44,25 @@ public:
 </head>
 <body>
 設定 __AC_LINK__
+</body>
+</html>)";
+
+    _pleasewait = R"(
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<script>
+
+window.setTimeout(function(){
+  window.location.href = '/lauchdevicelogin'
+}, 3000);
+
+</script>
+<body>
+...We could get Device Code.
+We will go to next page...
 </body>
 </html>)";
   }
@@ -60,21 +89,11 @@ public:
 
   void createAuxPage(void) {
     // login settings
-    // ACText(header, "Device Login Settings");
-    // ACText(caption, "次の項目を入力して[Get Device Code]ボタンを押してください");
-    // ACInput(userID, "Client ID", "", "Client or Generic ID", "e.g. 3837bbf0-30fb-47ad-bce8-f460ba9880c3");
-    // ACInput(tenantID, "Tenant Hostname or ID", "", "Tenant Hostname or ID", "e.g. contoso.onmicrosoft.com");
-    // ACSubmit(devicecode, "Get Device Code", "/getdevicecode");
-
-    _loginconfig.add({_header});
+    _loginconfig.add({_header, _caption, _clientID, _tenantID, _getdevicecode});
 
     // show device code
-    // ACText(header2, "Device Login");
-    // ACText(caption2, "Device Codeをコピーして[Start device login]ボタンを押してください");
-    // ACInput(devicecode2, "Device Code", "");  //ここに読み取り専用で表示
-    // ACSubmit(startlogin, "Start device login", "https://microsoft.com/devicelogin");
+    _devicelogin.add({_header2, _caption2, _devicecode, _startlogin});
 
-    _devicelogin.add({_header});
     _portal.join({_loginconfig, _devicelogin});
   }
 
@@ -87,34 +106,38 @@ public:
       _server.send(200, "text/html", _content);
     });
 
-    // memo これがないと落ちる。
-    _portal.on("/loginSettings", [&](AutoConnectAux& aux, PageArgument& args) -> String {
-      return String();
+    _server.on("/getdevicecode", [&]() {
+      log_d("TODO ここにデバイスコードを開始するステートを記述すること");
+      _loginconfig.fetchElement();
+
+      _clientIdValue = _loginconfig["clientID"].value;
+      _tenantValue   = _loginconfig["tenantID"].value;
+
+      log_d("%s, %s", _clientIdValue.c_str(), _tenantValue.c_str());
+
+      _doc->startDevicelogin();
+
+      while (1) {
+        if (deviceidとれたら) {  // doc.startDevicelogin();
+          break;
+        }
+      }
+
+      _server.send(200, "text/html", _pleasewait);  //次の画面へ遷移
     });
 
     // memo これがないと落ちる。
-    _portal.on("/getdevicecode", [&](AutoConnectAux& aux, PageArgument& args) -> String {
+    _portal.on("/loginSettings", [&](AutoConnectAux& aux, PageArgument& args) -> String {
+      log_d("ここにデバイスコードを画面へ設定するコードを追加し、機能が動作すること");
+      aux["clientID"].as<AutoConnectInput>().value = "ex)3837bbf0-30fb-47ad-bce8-f460ba9880c3";
+      aux["tenantID"].as<AutoConnectInput>().value = "ex)contoso.onmicrosoft.com";
       return String();
     });
 
     _portal.on("/lauchdevicelogin", [&](AutoConnectAux& aux, PageArgument& args) -> String {
+      aux["devicecode"].as<AutoConnectInput>().value = _deviceCode;
       return String();
     });
-
-    // //ユーザーコードを取得する
-    // _server.on("/startlogin", [&]() {
-    //   _usercodeHtml.replace("__CLIENTID__", _clientIdValue);
-    //   _usercodeHtml.replace("__TENANTVALUE__", _tenantValue);
-    //   _usercodeHtml.replace("__POLLVALUE__", _pollIntervalValue);
-
-    //   _usercodeHtml.replace("__VERSION__", VERSION);
-    //   _usercodeHtml.replace("__SKETCHSIZE__", String(ESP.getSketchSize()));
-    //   _usercodeHtml.replace("__FREESKETCHSPACE__", String(ESP.getFreeSketchSpace()));
-    //   _usercodeHtml.replace("__FREEHEAP__", String(ESP.getFreeHeap()));
-    //   _usercodeHtml.replace("__USEDHEAP__", String(327680 - ESP.getFreeHeap()));
-
-    //   _server.send(200, "text/html", _usercodeHtml);
-    // });
 
     _config.autoReconnect     = true;
     _config.reconnectInterval = 1;
@@ -165,14 +188,23 @@ public:
   }
 
 private:
+  Document*         _doc;
   WiFiWebServer     _server;
   AutoConnectConfig _config;
   AutoConnect       _portal;
 
-  AutoConnectAux _loginconfig;
-  AutoConnectAux _devicelogin;
-  AutoConnectText _header;
+  AutoConnectAux    _loginconfig;
+  AutoConnectText   _header;
+  AutoConnectText   _caption;
+  AutoConnectInput  _clientID;
+  AutoConnectInput  _tenantID;
+  AutoConnectSubmit _getdevicecode;
 
+  AutoConnectAux    _devicelogin;
+  AutoConnectText   _header2;
+  AutoConnectText   _caption2;
+  AutoConnectInput  _devicecode;
+  AutoConnectSubmit _startlogin;
 
   bool _isDetect;
   bool _isConnect;
@@ -181,8 +213,9 @@ private:
   String   _hostName;
   String   _apName;
   uint16_t _httpPort;
+  String   _pleasewait;
 
   String _clientIdValue;
   String _tenantValue;
-  String _pollIntervalValue;
+  String _deviceCode;
 };

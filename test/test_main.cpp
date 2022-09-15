@@ -23,6 +23,9 @@ void wifi_test_002(void) {
 }
 
 void setup() {
+  delay(2000);
+  UNITY_BEGIN();
+
   // wifi.begin(SSID, PASSWORD);
   wifi.begin();
 }
