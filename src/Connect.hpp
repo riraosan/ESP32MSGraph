@@ -8,34 +8,33 @@
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <AutoConnect.h>
-#include <Document.h>
-using WiFiWebServer = WebServer;
+using WebServerClass = WebServer;
 #else
 #error Only for ESP32
 #endif
 
 class Connect {
 public:
-  Connect(Document* doc) : _doc(doc),
-                           _portal(_server),
-                           /*setting page*/
-                           _loginconfig("/loginSettings", "Device Login Settings"),
-                           _header("header", "Device Login Settings"),
-                           _caption("caption", "次の項目を入力して[Get Device Code]ボタンを押してください", "", "", AC_Tag_P),
-                           _clientID("clientID", "", "Client ID", "Client or Generic ID", "e.g. 3837bbf0-30fb-47ad-bce8-f460ba9880c3"),
-                           _tenantID("tenantID", "", "Tenant Hostname or ID", "Tenant Hostname or ID", "e.g. contoso.onmicrosoft.com"),
-                           _getdevicecode("getdevicecode", "Get Device Code", "/getdevicecode"),
-                           /*start login page*/
-                           _devicelogin("/lauchdevicelogin", "Dvice Login", false),  // hidden
-                           _header2("header2", "Device Login"),
-                           _caption2("caption2", "Device Codeをクリップボードにコピーして[Start device login]ボタンを押してください", "", "", AC_Tag_P),
-                           _devicecode("devicecode", "", "Device Code"),
-                           _startlogin("startlogin", "Start device login", "https://microsoft.com/devicelogin"),
-                           _isDetect(false),
-                           _isConnect(false),
-                           _hostName(F("graph")),
-                           _apName(F("ATOM-G-AP")),
-                           _httpPort(80) {
+  Connect(WebServerClass* server) : _server(server),
+                                    _portal(*_server),
+                                    /*setting page*/
+                                    _loginconfig("/loginSettings", "Device Login Settings"),
+                                    _header("header", "Device Login Settings"),
+                                    _caption("caption", "次の項目を入力して[Get Device Code]ボタンを押してください", "", "", AC_Tag_P),
+                                    _clientID("clientID", "", "Client ID", "Client or Generic ID", "e.g. 3837bbf0-30fb-47ad-bce8-f460ba9880c3"),
+                                    _tenantID("tenantID", "", "Tenant Hostname or ID", "Tenant Hostname or ID", "e.g. contoso.onmicrosoft.com"),
+                                    _getdevicecode("getdevicecode", "Get Device Code", "/getdevicecode"),
+                                    /*start login page*/
+                                    _devicelogin("/lauchdevicelogin", "Dvice Login", false),  // hidden
+                                    _header2("header2", "Device Login"),
+                                    _caption2("caption2", "Device Codeをクリップボードにコピーして[Start device login]ボタンを押してください", "", "", AC_Tag_P),
+                                    _devicecode("devicecode", "", "Device Code"),
+                                    _startlogin("startlogin", "Start device login", "https://microsoft.com/devicelogin"),
+                                    _isDetect(false),
+                                    _isConnect(false),
+                                    _hostName(F("graph")),
+                                    _apName(F("ATOM-G-AP")),
+                                    _httpPort(80) {
     _content = R"(
 <!DOCTYPE html>
 <html>
@@ -101,12 +100,12 @@ We will go to next page...
     createAuxPage();
 
     // Responder of root page and apply page handled directly from WebServer class.
-    _server.on("/", [&]() {
+    _server->on("/", [&]() {
       _content.replace("__AC_LINK__", String(AUTOCONNECT_LINK(COG_16)));
-      _server.send(200, "text/html", _content);
+      _server->send(200, "text/html", _content);
     });
 
-    _server.on("/getdevicecode", [&]() {
+    _server->on("/getdevicecode", [&]() {
       log_d("TODO ここにデバイスコードを開始するステートを記述すること");
       _loginconfig.fetchElement();
 
@@ -115,15 +114,13 @@ We will go to next page...
 
       log_d("%s, %s", _clientIdValue.c_str(), _tenantValue.c_str());
 
-      _doc->startDevicelogin();
+      // while (1) {
+      //   if (deviceidとれたら) {  // doc.startDevicelogin();
+      //     break;
+      //   }
+      // }
 
-      while (1) {
-        if (deviceidとれたら) {  // doc.startDevicelogin();
-          break;
-        }
-      }
-
-      _server.send(200, "text/html", _pleasewait);  //次の画面へ遷移
+      _server->send(200, "text/html", _pleasewait);  //次の画面へ遷移
     });
 
     // memo これがないと落ちる。
@@ -187,12 +184,12 @@ We will go to next page...
     _portal.handleClient();
   }
 
-private:
-  Document*         _doc;
-  WiFiWebServer     _server;
+protected:
+  WebServerClass*   _server;
   AutoConnectConfig _config;
   AutoConnect       _portal;
 
+private:
   AutoConnectAux    _loginconfig;
   AutoConnectText   _header;
   AutoConnectText   _caption;

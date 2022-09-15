@@ -15,13 +15,11 @@ public:
     this->_context = context;
   }
 
-  virtual void action1(void) = 0;
-  virtual void action2(void) = 0;
+  virtual void entryAction(void) = 0;
+  virtual void doActivity(void)  = 0;
+  virtual void exitAction(void)  = 0;
 
 protected:
-  /**
-   * @var Context
-   */
   Context *_context;
 };
 
@@ -29,6 +27,9 @@ class Context {
 public:
   Context(State *state) : _state(nullptr) {
     this->TransitionTo(state);
+  }
+
+  Context(void) : _state(nullptr) {
   }
 
   ~Context() {
@@ -39,24 +40,34 @@ public:
    * The Context allows changing the State object at runtime.
    */
   void TransitionTo(State *state) {
-    log_i("Context: Transition to %s", typeid(*state).name());
+    // log_i("Context: Transition to %s", typeid(*State).name());
     if (this->_state != nullptr) {
       delete this->_state;
     }
 
     this->_state = state;
-    this->_state->set_context(this);
+    this->_state->setContext(this);
   }
 
   /**
    * The Context delegates part of its behavior to the current State object.
    */
-  void request1(void) {
-    this->_state->action1();
+  void entryRequest(void) {
+    this->_state->entryAction();
   }
 
-  void request2(void) {
-    this->_state->action2();
+  void exitRequest(void) {
+    this->_state->exitAction();
+  }
+
+  void doRequest(void) {
+    this->_state->doActivity();
+  }
+
+  void update(void) {
+    entryRequest();
+    doRequest();
+    exitRequest();
   }
 
 private:

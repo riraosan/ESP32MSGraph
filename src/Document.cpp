@@ -1,11 +1,11 @@
 /*
-Documents Library
+Document Library
 
 Original Source:
 https://github.com/toblum/ESPTeamsPresence
 
 Licence:
-[MIT](https://github.com/riraosan/Documents/blob/master/LICENSE)
+[MIT](https://github.com/riraosan/Document/blob/master/LICENSE)
 
 Author:
 refactored by
@@ -103,11 +103,11 @@ MrY=
 )";
 #endif
 
-int Documents::getTokenLifetime() {
+int Document::getTokenLifetime() {
   return (_expires - millis()) / 1000;
 }
 
-void Documents::removeContext() {
+void Document::removeContext() {
   SPIFFS.remove(CONTEXT_FILE);
   log_d("removeContext() - Success");
 }
@@ -115,7 +115,7 @@ void Documents::removeContext() {
 /**
  * API request handler
  */
-bool Documents::requestJsonApi(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter filter, String url, String payload, String type, bool sendAuth) {
+bool Document::requestJsonApi(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter filter, String url, String payload, String type, bool sendAuth) {
   std::unique_ptr<WiFiClientSecure> client(new WiFiClientSecure);
 
 #ifndef DISABLECERTCHECK
@@ -135,7 +135,7 @@ bool Documents::requestJsonApi(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter 
 
     // Send auth header?
     if (sendAuth) {
-      String header = "Bearer " + access_token;
+      String header = "Bearer " + _access_token;
       https.addHeader("Authorization", header);
       log_i("[HTTPS] Auth token valid for %d s.", getTokenLifetime());
     }
@@ -188,166 +188,35 @@ bool Documents::requestJsonApi(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter 
   return false;
 }
 
-void Documents::handleRoot() {
-  log_d("handleRoot()");
-  // -- Let IotWebConf test and handle captive portal requests.
-  if (_iotWebConf->handleCaptivePortal()) {
-    return;
-  }
+void Document::handleGetSettings() {
+  // log_d("handleGetSettings()");
 
-  //   String response = R"(
-  // <!DOCTYPE html>
-  // <html lang="en">
-  // <head>
-  // <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
-  // <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
-  // <link href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css" rel="stylesheet" />
-  // <style type="text/css">
-  //   body {padding:3.5rem}
-  //   .ml-s {margin-left:1.0rem}
-  //   .mt-s {margin-top:1.0rem}
-  //   .mt {margin-top:3.5rem}
-  //   #dialog-devicelogin{max-width : 800px }
-  // </style>
-  // <script>
+  // const int capacity = JSON_OBJECT_SIZE(13);
 
-  // function closeDeviceLoginModal() {
-  //   document.getElementById('dialog-devicelogin').close();
-  // }
+  // StaticJsonDocument<capacity> responseDoc;
+  // responseDoc["client_id"].set(_paramClientIdValue);
+  // responseDoc["tenant"].set(_paramTenantValue);
+  // responseDoc["poll_interval"].set(_paramPollIntervalValue);
+  // responseDoc["num_leds"].set(_paramNumLedsValue);
 
-  // function performClearSettings() {
-  //   fetch('/api/clearSettings').then(r => r.json()).then(data => {
-  //     console.log('clearSettings', data);
-  //     document.getElementById('dialog-clearsettings').close();
-  //     document.getElementById('dialog-clearsettings-result').showModal();
-  //   });
-  // }
+  // responseDoc["heap"].set(ESP.getFreeHeap());
+  // responseDoc["min_heap"].set(ESP.getMinFreeHeap());
+  // responseDoc["sketch_size"].set(ESP.getSketchSize());
+  // responseDoc["free_sketch_space"].set(ESP.getFreeSketchSpace());
+  // responseDoc["flash_chip_size"].set(ESP.getFlashChipSize());
+  // responseDoc["flash_chip_speed"].set(ESP.getFlashChipSpeed());
+  // responseDoc["sdk_version"].set(ESP.getSdkVersion());
+  // responseDoc["cpu_freq"].set(ESP.getCpuFreqMHz());
 
-  // function openDeviceLoginModal() {
-  //   fetch('/api/startDevicelogin').then(r => r.json()).then(data => {
-  //     console.log('startDevicelogin', data);
-  //     if (data && data.user_code) {
-  //       document.getElementById('btn_open').href         = data.verification_uri;
-  //       document.getElementById('lbl_message').innerText = data.message;
-  //       document.getElementById('code_field').value      = data.user_code;
-  //     }
-  //     document.getElementById('dialog-devicelogin').showModal();
-  //   });
-  // }
+  // responseDoc["sketch_version"].set(VERSION);
 
-  // </script>
-  // <title>ESP32 teams presence</title>
-  // </head>
-  // <body>
-  // <h2>ESP32 Teams Presence - Ver.__VERSION__ </h2>
+  // serializeJsonPretty(responseDoc, Serial);
 
-  // <section class="mt"><div class="nes-balloon from-left">
-  // __MESSAGE__
-  // __BUTTON__
-
-  // <dialog class="nes-dialog is-rounded" id="dialog-devicelogin">
-  // <p class="title">Start device login</p>
-  // <p id="lbl_message"></p>
-  // <input type="text" id="code_field"class="nes-input" disabled >
-  // <menu class="dialog-menu">
-  // <button id="btn_close" class="nes-btn" onclick="closeDeviceLoginModal();">Close</button>
-  // <a class="nes-btn is-primary ml-s" id="btn_open" href="https://microsoft.com/devicelogin" target="_blank">Open device login</a>
-  // </menu>
-  // </dialog>
-
-  // </section>
-  // <div class="nes-balloon from-left mt">
-  // Go to <a href="config">configuration page</a> to change settings.
-  // </div>
-  // <section class="nes-container with-title"><h3 class="title">Current settings</h3>
-  // <div class=" nes-field mt-s "><label for=" name_field ">Client-ID</label><input type=" text " id=" name_field " class=" nes-input " disabled value=__CLIENTID__ ></div>
-  // <div class=" nes-field mt-s "><label for=" name_field ">Tenant hostname / ID</label><input type=" text " id=" name_field " class=" nes-input " disabled value=__TENANTVALUE__ ></div>
-  // <div class=" nes-field mt-s "><label for=" name_field ">Polling interval (sec)</label><input type=" text " id=" name_field " class=" nes-input " disabled value=__POLLVALUE__ ></div>
-  // <div class=" nes-field mt-s "><label for=" name_field ">Number of LEDs</label><input type=" text " id=" name_field " class=" nes-input " disabled value=__LEDSVALUE__ ></div>
-  // </section>
-
-  // <section class="nes-container with-title mt"><h3 class="title">Memory usage</h3>
-  // <div>Sketch: __SKETCHSIZE__ of __FREESKETCHSPACE__ bytes free</div>
-  // <progress class="nes-progress" value="__SKETCHSIZE__" max="__FREESKETCHSPACE__"></progress>
-  // <div class="mt-s">RAM: __FREEHEAP__ of 327680 bytes free</div>
-  // <progress class="nes-progress" value="__USEDHEAP__" max="327680"></progress>
-  // </section>
-
-  // <section class="nes-container with-title mt"><h3 class="title">Danger area</h3>
-  // <dialog class="nes-dialog is-rounded" id="dialog-clearsettings">
-  // <p class="title">Really clear all settings?</p>
-  // <button class="nes-btn" onclick="document.getElementById('dialog-clearsettings').close();">Close</button>
-  // <button class="nes-btn is-error" onclick="performClearSettings();">Clear all settings</button>
-  // </dialog>
-  // <dialog class="nes-dialog is-rounded" id="dialog-clearsettings-result">
-  // <p class="title">All settings were cleared.</p>
-  // </dialog>
-  // <div><button type="button" class="nes-btn is-error" onclick="document.getElementById('dialog-clearsettings').showModal();">Clear all settings</button></div>
-  // </section>
-
-  // <div class="mt">
-  // <i class=" nes-icon github "></i> Find the <a href="https://github.com/toblum/ESPTeamsPresence" target="_blank">ESPTeamsPresence</a> project on GitHub.</i>
-  // </div>
-  // </body>
-  // </html>
-  // )";
-
-  if (_paramTenantValue.isEmpty() || _paramClientIdValue.isEmpty()) {
-    response.replace("__MESSAGE__", R"(<p class="note nes-text is-error">Some settings are missing. Go to <a href="config">configuration page</a> to complete setup.</p></div>)");
-    response.replace("__BUTTON__", "");
-  } else {
-    if (access_token == "") {
-      response.replace("__MESSAGE__", R"(<p class="note nes-text is-error">No authentication info's found, start device login flow to complete widget setup!</p></div>)");
-    } else {
-      response.replace("__MESSAGE__", R"(<p class="note nes-text">Device setup complete, but you can start the device login flow if you need to re-authenticate.</p></div>)");
-    }
-
-    response.replace("__BUTTON__", R"(<div><button type="button" class="nes-btn" onclick="openDeviceLoginModal();" >Start device login</button></div>)");
-  }
-
-  response.replace("__CLIENTID__", _paramClientIdValue);
-  response.replace("__TENANTVALUE__", _paramTenantValue);
-  response.replace("__POLLVALUE__", _paramPollIntervalValue);
-  response.replace("__LEDSVALUE__", _paramNumLedsValue);
-
-  response.replace("__VERSION__", VERSION);
-  response.replace("__SKETCHSIZE__", String(ESP.getSketchSize()));
-  response.replace("__FREESKETCHSPACE__", String(ESP.getFreeSketchSpace()));
-  response.replace("__FREEHEAP__", String(ESP.getFreeHeap()));
-  response.replace("__USEDHEAP__", String(327680 - ESP.getFreeHeap()));
-
-  _server->send(200, "text/html", response);
-}
-
-void Documents::handleGetSettings() {
-  log_d("handleGetSettings()");
-
-  const int capacity = JSON_OBJECT_SIZE(13);
-
-  StaticJsonDocument<capacity> responseDoc;
-  responseDoc["client_id"].set(_paramClientIdValue);
-  responseDoc["tenant"].set(_paramTenantValue);
-  responseDoc["poll_interval"].set(_paramPollIntervalValue);
-  responseDoc["num_leds"].set(_paramNumLedsValue);
-
-  responseDoc["heap"].set(ESP.getFreeHeap());
-  responseDoc["min_heap"].set(ESP.getMinFreeHeap());
-  responseDoc["sketch_size"].set(ESP.getSketchSize());
-  responseDoc["free_sketch_space"].set(ESP.getFreeSketchSpace());
-  responseDoc["flash_chip_size"].set(ESP.getFlashChipSize());
-  responseDoc["flash_chip_speed"].set(ESP.getFlashChipSpeed());
-  responseDoc["sdk_version"].set(ESP.getSdkVersion());
-  responseDoc["cpu_freq"].set(ESP.getCpuFreqMHz());
-
-  responseDoc["sketch_version"].set(VERSION);
-
-  serializeJsonPretty(responseDoc, Serial);
-
-  _server->send(200, "application/json", responseDoc.as<String>());
+  // _server->send(200, "application/json", responseDoc.as<String>());
 }
 
 // Delete EEPROM by removing the trailing sequence, remove context file
-void Documents::handleClearSettings() {
+void Document::handleClearSettings() {
   log_d("handleClearSettings()");
 
   for (int t = 0; t < 4; t++) {
@@ -356,14 +225,11 @@ void Documents::handleClearSettings() {
   EEPROM.commit();
   removeContext();
 
-  _server->send(200, "application/json", "{\"action\": \"clear_settings\", \"error\": false}");
+  //_server->send(200, "application/json", "{\"action\": \"clear_settings\", \"error\": false}");
   ESP.restart();
 }
 
-void Documents::startDevicelogin() {
-  // Only if not already started
-  if (_state != SMODEDEVICELOGINSTARTED) {
-    log_d("handleStartDevicelogin()");
+void Document::startDevicelogin() {
 
     // Request device login context
     DynamicJsonDocument doc(JSON_OBJECT_SIZE(6) + 540);
@@ -386,23 +252,23 @@ void Documents::startDevicelogin() {
       responseDoc["message"]          = doc["message"].as<const char*>();
 
       // Set state, update polling timestamp
-      _state     = SMODEDEVICELOGINSTARTED;
+      //_state     = SMODEDEVICELOGINSTARTED;
       _tsPolling = millis() + (_interval * 1000);
 
       // Send JSON response
-      _server->send(200, "application/json", responseDoc.as<String>());
+      //_server->send(200, "application/json", responseDoc.as<String>());
     } else {
       _server->send(500, "application/json", "{\"error\": \"devicelogin_unknown_response\"}");
     }
-  } else {
-    _server->send(409, "application/json", "{\"error\": \"devicelogin_already_running\"}");
-  }
+  // } else {
+  //   _server->send(409, "application/json", "{\"error\": \"devicelogin_already_running\"}");
+  // }
 }
 
 /**
  * SPIFFS webserver
  */
-bool Documents::exists(String path) {
+bool Document::exists(String path) {
   bool yes  = false;
   File file = SPIFFS.open(path, "r");
   if (!file.isDirectory()) {
@@ -412,98 +278,7 @@ bool Documents::exists(String path) {
   return yes;
 }
 
-void Documents::handleMinimalUpload() {
-  _server->sendHeader("Access-Control-Allow-Origin", "*");
-  _server->send(200, "text/html", "<!DOCTYPE html>\
-			<html>\
-			<head>\
-				<title>ESP8266 Upload</title>\
-				<meta charset=\"utf-8\">\
-				<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\
-				<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\
-			</head>\
-			<body>\
-				<form action=\"/fs/upload\" method=\"post\" enctype=\"multipart/form-data\">\
-				<input type=\"file\" name=\"data\">\
-				<input type=\"text\" name=\"path\" value=\"/\">\
-				<button>Upload</button>\
-				</form>\
-			</body>\
-			</html>");
-}
-
-void Documents::handleFileUpload() {
-  File        fsUploadFile;
-  HTTPUpload& upload = _server->upload();
-  if (upload.status == UPLOAD_FILE_START) {
-    String filename = upload.filename;
-    if (!filename.startsWith("/")) {
-      filename = "/" + filename;
-    }
-    log_d("handleFileUpload Name: %s", filename);
-    fsUploadFile = SPIFFS.open(filename, "w");
-    filename     = String();
-  } else if (upload.status == UPLOAD_FILE_WRITE) {
-    // DBG_OUTPUT_PORT.print("handleFileUpload Data: "); DBG_OUTPUT_PORT.println(upload.currentSize);
-    if (fsUploadFile) {
-      fsUploadFile.write(upload.buf, upload.currentSize);
-    }
-  } else if (upload.status == UPLOAD_FILE_END) {
-    if (fsUploadFile) {
-      fsUploadFile.close();
-    }
-    log_d("handleFileUpload Size: %d", upload.totalSize);
-  }
-}
-
-void Documents::handleFileDelete() {
-  if (_server->args() == 0) {
-    return _server->send(500, "text/plain", "BAD ARGS");
-  }
-  String path = _server->arg(0);
-  log_d("handleFileDelete: %s", path);
-  if (path == "/") {
-    return _server->send(500, "text/plain", "BAD PATH");
-  }
-  if (!exists(path)) {
-    return _server->send(404, "text/plain", "FileNotFound");
-  }
-  SPIFFS.remove(path);
-  _server->send(200, "text/plain", "");
-  path = String();
-}
-
-void Documents::handleFileList() {
-  if (!_server->hasArg("dir")) {
-    _server->send(500, "text/plain", "BAD ARGS");
-    return;
-  }
-
-  String path = _server->arg("dir");
-  log_d("handleFileList: %s", path);
-
-  File root     = SPIFFS.open(path);
-  path          = String();
-  String output = "[";
-  if (root.isDirectory()) {
-    File file = root.openNextFile();
-    while (file) {
-      if (output != "[") {
-        output += ',';
-      }
-      output += "{\"type\":\"";
-      output += (file.isDirectory()) ? "dir" : "file";
-      output += "\",\"name\":\"";
-      output += String(file.name()).substring(1);
-      output += "\"}";
-      file = root.openNextFile();
-    }
-  }
-  output += "]";
-  _server->send(200, "text/json", output);
-}
-
-String Documents::getContentType(String filename) {
+String Document::getContentType(String filename) {
   if (_server->hasArg("download")) {
     return "application/octet-stream";
   } else if (filename.endsWith(".htm")) {
@@ -534,7 +309,7 @@ String Documents::getContentType(String filename) {
   return "text/plain";
 }
 
-bool Documents::handleFileRead(String path) {
+bool Document::handleFileRead(String path) {
   log_d("handleFileRead: %s", path);
   if (path.endsWith("/")) {
     path += "index.htm";
@@ -554,7 +329,7 @@ bool Documents::handleFileRead(String path) {
 }
 
 // Poll for access token
-void Documents::pollForToken(void) {
+void Document::pollForToken(void) {
   String payload = "client_id=" + String(_paramClientIdValue) + "&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=" + _device_code;
 
   DynamicJsonDocument responseDoc(JSON_OBJECT_SIZE(7) + 5000);
@@ -565,7 +340,7 @@ void Documents::pollForToken(void) {
                             payload);
 
   if (!res) {
-    _state = SMODEDEVICELOGINFAILED;
+    //_state = SMODEDEVICELOGINFAILED;
   } else if (responseDoc.containsKey("error")) {
     const char* _error             = responseDoc["error"];
     const char* _error_description = responseDoc["error_description"];
@@ -574,19 +349,19 @@ void Documents::pollForToken(void) {
       log_i("pollForToken() - Wating for authorization by user: %s", _error_description);
     } else {
       log_e("pollForToken() - Unexpected error: %s, %s", _error, _error_description);
-      _state = SMODEDEVICELOGINFAILED;
+      //_state = SMODEDEVICELOGINFAILED;
     }
   } else {
     if (responseDoc.containsKey("access_token") && responseDoc.containsKey("refresh_token") && responseDoc.containsKey("id_token")) {
       // Save tokens and expiration
       unsigned int _expires_in = responseDoc["expires_in"].as<unsigned int>();
-      access_token             = responseDoc["access_token"].as<String>();
+      _access_token             = responseDoc["access_token"].as<String>();
       _refresh_token           = responseDoc["refresh_token"].as<String>();
-      id_token                 = responseDoc["id_token"].as<String>();
+      _id_token                 = responseDoc["id_token"].as<String>();
       _expires                 = millis() + (_expires_in * 1000);  // Calculate timestamp when token _expires
 
       // Set state
-      _state = SMODEAUTHREADY;
+      //_state = SMODEAUTHREADY;
 
       log_i("Set : SMODEAUTHREADY");
     } else {
@@ -596,10 +371,10 @@ void Documents::pollForToken(void) {
 }
 
 // Refresh the access token
-bool Documents::refreshToken(void) {
+bool Document::refreshToken(void) {
   bool success = false;
   // See: https://docs.microsoft.com/de-de/azure/active-directory/develop/v1-protocols-oauth-code#refreshing-the-access-tokens
-  String payload = "client_id=" + _paramClientIdValue + "&grant_type=refresh_token&refresh_token=" + refresh_token;
+  String payload = "client_id=" + _paramClientIdValue + "&grant_type=refresh_token&refresh_token=" + _refresh_token;
   log_d("refreshToken()");
 
   DynamicJsonDocument responseDoc(6144);  // from ArduinoJson Assistant
@@ -612,7 +387,7 @@ bool Documents::refreshToken(void) {
   // Replace tokens and expiration
   if (res && responseDoc.containsKey("access_token") && responseDoc.containsKey("refresh_token")) {
     if (!responseDoc["access_token"].isNull()) {
-      access_token = responseDoc["access_token"].as<String>();
+      _access_token = responseDoc["access_token"].as<String>();
       success      = true;
     }
     if (!responseDoc["refresh_token"].isNull()) {
@@ -620,7 +395,7 @@ bool Documents::refreshToken(void) {
       success        = true;
     }
     if (!responseDoc["id_token"].isNull()) {
-      id_token = responseDoc["id_token"].as<String>();
+      _id_token = responseDoc["id_token"].as<String>();
     }
     if (!responseDoc["expires_in"].isNull()) {
       int _expires_in = responseDoc["expires_in"].as<unsigned int>();
@@ -628,7 +403,7 @@ bool Documents::refreshToken(void) {
     }
 
     log_d("refreshToken() - Success");
-    _state = SMODEPOLLPRESENCE;
+    //_state = SMODEPOLLPRESENCE;
   } else {
     log_d("refreshToken() - Error:");
     // Set retry after timeout
@@ -638,113 +413,113 @@ bool Documents::refreshToken(void) {
 }
 
 // Implementation of a statemachine to handle the different application states
-void Documents::statemachine(void) {
-  // Statemachine: Check states of iotWebConf to detect AP mode and WiFi Connection attempt
-  byte iotWebConfState = _iotWebConf->getState();
-  if (iotWebConfState != _lastIotWebConfState) {
-    if (iotWebConfState == IOTWEBCONF_STATE_NOT_CONFIGURED || iotWebConfState == IOTWEBCONF_STATE_AP_MODE) {
-      log_d("Detected AP mode");
-      setAnimation(0, FX_MODE_THEATER_CHASE, WHITE);
-    }
-    if (iotWebConfState == IOTWEBCONF_STATE_CONNECTING) {
-      log_d("WiFi connecting");
-      _state = SMODEWIFICONNECTING;
-    }
-  }
-  _lastIotWebConfState = iotWebConfState;
+// void Document::statemachine(void) {
+//   // Statemachine: Check states of iotWebConf to detect AP mode and WiFi Connection attempt
+//   byte iotWebConfState = _iotWebConf->getState();
+//   if (iotWebConfState != _lastIotWebConfState) {
+//     if (iotWebConfState == IOTWEBCONF_STATE_NOT_CONFIGURED || iotWebConfState == IOTWEBCONF_STATE_AP_MODE) {
+//       log_d("Detected AP mode");
+//       setAnimation(0, FX_MODE_THEATER_CHASE, WHITE);
+//     }
+//     if (iotWebConfState == IOTWEBCONF_STATE_CONNECTING) {
+//       log_d("WiFi connecting");
+//       _state = SMODEWIFICONNECTING;
+//     }
+//   }
+//   //_lastIotWebConfState = iotWebConfState;
 
-  // Statemachine: Wifi connection start
-  if (_state == SMODEWIFICONNECTING && _laststate != SMODEWIFICONNECTING) {
-    setAnimation(0, FX_MODE_THEATER_CHASE, BLUE);
-  }
+//   // Statemachine: Wifi connection start
+//   if (_state == SMODEWIFICONNECTING && _laststate != SMODEWIFICONNECTING) {
+//     setAnimation(0, FX_MODE_THEATER_CHASE, BLUE);
+//   }
 
-  // Statemachine: After wifi is connected
-  if (_state == SMODEWIFICONNECTED && _laststate != SMODEWIFICONNECTED) {
-    setAnimation(0, FX_MODE_THEATER_CHASE, GREEN);
-    // startMDNS();
-    loadContext();
-    // WiFi client
-    log_d("Wifi connected, waiting for requests ...");
-  }
+//   // Statemachine: After wifi is connected
+//   if (_state == SMODEWIFICONNECTED && _laststate != SMODEWIFICONNECTED) {
+//     setAnimation(0, FX_MODE_THEATER_CHASE, GREEN);
+//     // startMDNS();
+//     loadContext();
+//     // WiFi client
+//     log_d("Wifi connected, waiting for requests ...");
+//   }
 
-  // Statemachine: Devicelogin started
-  if (_state == SMODEDEVICELOGINSTARTED) {
-    // log_d("SMODEDEVICELOGINSTARTED");
-    if (_laststate != SMODEDEVICELOGINSTARTED) {
-      setAnimation(0, FX_MODE_THEATER_CHASE, PURPLE);
-      log_d("Device login failed");
-    }
-    if (millis() >= _tsPolling) {
-      pollForToken();
-      _tsPolling = millis() + (_interval * 1000);
-      log_d("pollForToken");
-    }
-  }
+//   // Statemachine: Devicelogin started
+//   if (_state == SMODEDEVICELOGINSTARTED) {
+//     // log_d("SMODEDEVICELOGINSTARTED");
+//     if (_laststate != SMODEDEVICELOGINSTARTED) {
+//       setAnimation(0, FX_MODE_THEATER_CHASE, PURPLE);
+//       log_d("Device login failed");
+//     }
+//     if (millis() >= _tsPolling) {
+//       pollForToken();
+//       _tsPolling = millis() + (_interval * 1000);
+//       log_d("pollForToken");
+//     }
+//   }
 
-  // Statemachine: Devicelogin failed
-  if (_state == SMODEDEVICELOGINFAILED) {
-    log_d("Device login failed");
-    _state = SMODEWIFICONNECTED;  // Return back to initial mode
-  }
+//   // Statemachine: Devicelogin failed
+//   if (_state == SMODEDEVICELOGINFAILED) {
+//     log_d("Device login failed");
+//     _state = SMODEWIFICONNECTED;  // Return back to initial mode
+//   }
 
-  // Statemachine: Auth is ready, start polling for presence immediately
-  if (_state == SMODEAUTHREADY) {
-    saveContext();
-    _state     = SMODEPOLLPRESENCE;
-    _tsPolling = millis();
-  }
+//   // Statemachine: Auth is ready, start polling for presence immediately
+//   if (_state == SMODEAUTHREADY) {
+//     saveContext();
+//     _state     = SMODEPOLLPRESENCE;
+//     _tsPolling = millis();
+//   }
 
-  // Statemachine: Poll for presence information, even if there was a error before (handled below)
-  if (_state == SMODEPOLLPRESENCE) {
-    if (millis() >= _tsPolling) {
-      log_i("%s", "Polling presence info ...");
-      pollPresence();
-      _tsPolling = millis() + (atoi(_paramPollIntervalValue.c_str()) * 1000);
-      log_i("--> Availability: %s, Activity: %s", availability.c_str(), activity.c_str());
-    }
+//   // Statemachine: Poll for presence information, even if there was a error before (handled below)
+//   if (_state == SMODEPOLLPRESENCE) {
+//     if (millis() >= _tsPolling) {
+//       log_i("%s", "Polling presence info ...");
+//       pollPresence();
+//       _tsPolling = millis() + (atoi(_paramPollIntervalValue.c_str()) * 1000);
+//       log_i("--> Availability: %s, Activity: %s", availability.c_str(), activity.c_str());
+//     }
 
-    if (getTokenLifetime() < TOKEN_REFRESH_TIMEOUT) {
-      log_w("Token needs refresh, valid for %d s.", getTokenLifetime());
-      _state = SMODEREFRESHTOKEN;
-    }
-  }
+//     if (getTokenLifetime() < TOKEN_REFRESH_TIMEOUT) {
+//       log_w("Token needs refresh, valid for %d s.", getTokenLifetime());
+//       _state = SMODEREFRESHTOKEN;
+//     }
+//   }
 
-  // Statemachine: Refresh token
-  if (_state == SMODEREFRESHTOKEN) {
-    if (_laststate != SMODEREFRESHTOKEN) {
-      setAnimation(0, FX_MODE_THEATER_CHASE, RED);
-    }
-    if (millis() >= _tsPolling) {
-      boolean success = refreshToken();
-      if (success) {
-        saveContext();
-      }
-    }
-  }
+//   // Statemachine: Refresh token
+//   if (_state == SMODEREFRESHTOKEN) {
+//     if (_laststate != SMODEREFRESHTOKEN) {
+//       setAnimation(0, FX_MODE_THEATER_CHASE, RED);
+//     }
+//     if (millis() >= _tsPolling) {
+//       boolean success = refreshToken();
+//       if (success) {
+//         saveContext();
+//       }
+//     }
+//   }
 
-  // Statemachine: Polling presence failed
-  if (_state == SMODEPRESENCEREQUESTERROR) {
-    if (_laststate != SMODEPRESENCEREQUESTERROR) {
-      _retries = 0;
-    }
+//   // Statemachine: Polling presence failed
+//   if (_state == SMODEPRESENCEREQUESTERROR) {
+//     if (_laststate != SMODEPRESENCEREQUESTERROR) {
+//       _retries = 0;
+//     }
 
-    log_e("Polling presence failed, retry #%d.", _retries);
-    if (_retries >= 5) {
-      // Try token refresh
-      _state = SMODEREFRESHTOKEN;
-    } else {
-      _state = SMODEPOLLPRESENCE;
-    }
-  }
+//     log_e("Polling presence failed, retry #%d.", _retries);
+//     if (_retries >= 5) {
+//       // Try token refresh
+//       _state = SMODEREFRESHTOKEN;
+//     } else {
+//       _state = SMODEPOLLPRESENCE;
+//     }
+//   }
 
-  // Update laststate
-  if (_laststate != _state) {
-    _laststate = _state;
-    log_d("======================================================================");
-  }
-}
+//   // Update laststate
+//   if (_laststate != _state) {
+//     _laststate = _state;
+//     log_d("======================================================================");
+//   }
+// }
 
-bool Documents::loadContext(void) {
+bool Document::loadContext(void) {
   File    file    = SPIFFS.open(CONTEXT_FILE);
   boolean success = false;
 
@@ -764,7 +539,7 @@ bool Documents::loadContext(void) {
       } else {
         int numSettings = 0;
         if (!contextDoc["access_token"].isNull()) {
-          access_token = contextDoc["access_token"].as<String>();
+          _access_token = contextDoc["access_token"].as<String>();
           numSettings++;
         }
         if (!contextDoc["refresh_token"].isNull()) {
@@ -772,7 +547,7 @@ bool Documents::loadContext(void) {
           numSettings++;
         }
         if (!contextDoc["id_token"].isNull()) {
-          id_token = contextDoc["id_token"].as<String>();
+          _id_token = contextDoc["id_token"].as<String>();
           numSettings++;
         }
         if (numSettings == 3) {
@@ -780,7 +555,7 @@ bool Documents::loadContext(void) {
           log_d("loadContext() - Success");
           if (_paramClientIdValue.length() > 0 && _paramTenantValue.length() > 0) {
             log_d("loadContext() - Next: Refresh token.");
-            _state = SMODEREFRESHTOKEN;
+            //_state = SMODEREFRESHTOKEN;
           } else {
             log_d("loadContext() - No client id or tenant setting found.");
           }
@@ -797,7 +572,7 @@ bool Documents::loadContext(void) {
 }
 
 // Save context information to file in SPIFFS
-void Documents::saveContext(void) {
+void Document::saveContext(void) {
   const size_t        capacity = JSON_OBJECT_SIZE(3) + 5000;
   DynamicJsonDocument contextDoc(capacity);
   contextDoc["access_token"]  = _access_token.c_str();
@@ -814,7 +589,7 @@ void Documents::saveContext(void) {
 // TODO
 // Get presence information
 // user method
-void Documents::pollPresence(void) {
+void Document::pollPresence(void) {
   log_d("pollPresence()");
   // See: https://github.com/microsoftgraph/microsoft-graph-docs/blob/ananya/api-reference/beta/resources/presence.md
   const size_t        capacity = JSON_OBJECT_SIZE(4) + 500;
@@ -828,7 +603,7 @@ void Documents::pollPresence(void) {
                             true);
 
   if (!res) {
-    _state = SMODEPRESENCEREQUESTERROR;
+    //_state = SMODEPRESENCEREQUESTERROR;
     _retries++;
     log_e("Presence request error. retry:#%d", _retries);
   } else if (responseDoc.containsKey("error")) {
@@ -836,92 +611,21 @@ void Documents::pollPresence(void) {
     if (strcmp(_error_code, "InvalidAuthenticationToken")) {
       log_e("pollPresence() - Refresh needed");
       _tsPolling = millis();
-      _state     = SMODEREFRESHTOKEN;
+      //_state     = SMODEREFRESHTOKEN;
     } else {
       log_e("pollPresence() - Error: %s\n", _error_code);
-      _state = SMODEPRESENCEREQUESTERROR;
+      //_state = SMODEPRESENCEREQUESTERROR;
       _retries++;
     }
   } else {
     log_i("success to get Presence");
 
     // Store presence info
-    availability = responseDoc["availability"].as<String>();
-    activity     = responseDoc["activity"].as<String>();
-    _retries     = 0;
+    // availability = responseDoc["availability"].as<String>();
+    // activity     = responseDoc["activity"].as<String>();
+    // _retries     = 0;
 
-    // TODO
-    setPresenceAnimation();
-  }
-}
-
-// TODO
-// Neopixel control
-// user method
-void Documents::setAnimation(uint8_t segment, uint8_t mode, uint32_t color, uint16_t speed, bool reverse) {
-  uint16_t startLed, endLed = 0;
-
-  // Support only one segment for the moment
-  if (segment == 0) {
-    startLed = 0;
-    endLed   = ws2812fx.getLength();
-  }
-
-  log_i("setAnimation: %d, %d-%d, Mode: %d, Color: %d, Speed: %d", segment, startLed, endLed, mode, color, speed);
-
-  ws2812fx.setSegment(segment, startLed, endLed, mode, color, speed, reverse);
-}
-
-// TODO
-//  user method...
-//   Activity
-//   Available,
-//   Away,
-//   BeRightBack,
-//   Busy,
-//   DoNotDisturb,
-//   InACall,
-//   InAConferenceCall,
-//   Inactive,
-//   InAMeeting,
-//   Offline,
-//   OffWork,
-//   OutOfOffice,
-//   PresenceUnknown,
-//   Presenting,
-//   UrgentInterruptionsOnly
-void Documents::setPresenceAnimation() {
-  if (activity.equals("Available")) {
-    setAnimation(0, FX_MODE_STATIC, GREEN);
-  }
-  if (activity.equals("Away")) {
-    setAnimation(0, FX_MODE_STATIC, YELLOW);
-  }
-  if (activity.equals("BeRightBack")) {
-    setAnimation(0, FX_MODE_STATIC, ORANGE);
-  }
-  if (activity.equals("Busy")) {
-    setAnimation(0, FX_MODE_STATIC, PURPLE);
-  }
-  if (activity.equals("DoNotDisturb") || activity.equals("UrgentInterruptionsOnly")) {
-    setAnimation(0, FX_MODE_STATIC, PINK);
-  }
-  if (activity.equals("InACall")) {
-    setAnimation(0, FX_MODE_BREATH, RED);
-  }
-  if (activity.equals("InAConferenceCall")) {
-    setAnimation(0, FX_MODE_BREATH, RED, 9000);
-  }
-  if (activity.equals("Inactive")) {
-    setAnimation(0, FX_MODE_BREATH, WHITE);
-  }
-  if (activity.equals("InAMeeting")) {
-    setAnimation(0, FX_MODE_SCAN, RED);
-  }
-  if (activity.equals("Offline") || activity.equals("OffWork") || activity.equals("OutOfOffice") || activity.equals("PresenceUnknown")) {
-    setAnimation(0, FX_MODE_STATIC, BLACK);
-  }
-  if (activity.equals("Presenting")) {
-    setAnimation(0, FX_MODE_COLOR_WIPE, RED);
+    // // TODO
+    // setPresenceAnimation();
   }
 }

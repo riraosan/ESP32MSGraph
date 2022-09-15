@@ -16,6 +16,8 @@ Contributors:
 [toblum](https://github.com/toblum)
 */
 
+#pragma once
+
 #include <Arduino.h>
 #include <config.h>
 #include <filter.h>
@@ -27,65 +29,37 @@ Contributors:
 #include <EEPROM.h>
 #include <FS.h>
 #include <SPIFFS.h>
-
-// from github
-//#include <IotWebConf.h>
 #include <ArduinoJson.h>
-//#include <WS2812FX.h>
-
+#include <WebServer.h>
 #include <Connect.hpp>
+using WebServerClass = WebServer;
 
-// State
-#define SMODEINITIAL              0   // Initial
-#define SMODEWIFICONNECTING       1   // Wait for wifi connection
-#define SMODEWIFICONNECTED        2   // Wifi connected
-#define SMODEDEVICELOGINSTARTED   10  // Device login flow was started
-#define SMODEDEVICELOGINFAILED    11  // Device login flow failed
-#define SMODEAUTHREADY            20  // Authentication successful
-#define SMODEREFRESHTOKEN         22  // Access token needs refresh
-// TODO
-#define SMODEPOLLPRESENCE         21  // Poll for presence
-#define SMODEPRESENCEREQUESTERROR 23  // Access token needs refresh
-
-class Document {
+class Document : public Connect {
 public:
   // Document(void) {}
-  Document(WebServer *server) : _server(server),
-                                _tsPolling(0),
-                                _expires(0),
-                                _interval(5),
-                                _retries(0),
-                                _lastIotWebConfState(0) {
+  Document(WebServerClass *server) : Connect(server),
+                                     _tsPolling(0),
+                                     _expires(0),
+                                     _interval(5),
+                                     _retries(0) {
     deserializeJson(_loginFilter, loginFilter);
     deserializeJson(_refleshtokenFilter, refleshtokenFilter);
     deserializeJson(_presenceFilter, presenceFilter);
   }
 
-  ~Document(void) {}
-
-  void update(void) {
-    // statemachine();
+  ~Document(void) {
   }
 
-  void changeState(uint8_t state) {
-    _state = state;
+  void update(void) {
   }
 
   // user method
   void pollPresence(void);
-
-  // LED(VIEW)
-  // TODO del setAnimation
-  void setAnimation(uint8_t segment, uint8_t mode = 0, uint32_t color = 0, uint16_t speed = 3000, bool reverse = false);
-  void setPresenceAnimation(void);
-
   void handleRoot(void);
-  void handleMinimalUpload(void);
   void handleGetSettings(void);
   void handleClearSettings(void);
   void handleFileDelete(void);
   void handleFileList(void);
-  void handleFileUpload(void);
   bool handleFileRead(String path);
 
   void setClientIdValue(String clientid) {
@@ -96,20 +70,7 @@ public:
     _paramTenantValue = tenant;
   }
 
-  void setPollIntervalValue(String interval) {
-    _paramPollIntervalValue = interval;
-  }
-
-  // TODO
-  void setNumLedsValue(String lednum) {
-    _paramNumLedsValue = lednum;
-  }
-
 protected:
-  // controller
-  // TODO
-  // void statemachine(void);
-
   // for WebUI
   // API request handler
   bool   requestJsonApi(JsonDocument &doc, ARDUINOJSON_NAMESPACE::Filter filter, String url, String payload = "", String type = "POST", bool sendAuth = false);
@@ -129,18 +90,12 @@ protected:
   int getTokenLifetime(void);
 
 private:
-  Connect _connect;
-
-  // uint8_t       _state;
-  // uint8_t       _laststate;
   unsigned long _tsPolling;
   unsigned int  _expires;
 
   String _paramClientIdValue;
   String _paramTenantValue;
   String _paramPollIntervalValue;
-  // TODO
-  // String _paramNumLedsValue;
 
   String _access_token;
   String _refresh_token;
@@ -150,11 +105,7 @@ private:
   String  _device_code;
   uint8_t _interval;
 
-  // TODO
-  // String  availability;
-  // String  activity;
   uint8_t _retries;
-  // byte    _lastIotWebConfState;
 
   StaticJsonDocument<200> _loginFilter;         //初回ログインに使用
   StaticJsonDocument<200> _tokenFilter;         //トークン取得に使用
