@@ -1,20 +1,12 @@
-#include <Arduino.h>
 #include <unity.h>
 
-#include <Connect.hpp>
+#include <Arduino.h>
+#include <WebServer.h>
+#include <ESP32MSGraph.hpp>
+using WebServerClass = WebServer;
 
-#if defined(BUILD_TEST)
-
-#if 0
-//OK 2022-09-11
-#define SSID     "Buffalo-C130"
-#define PASSWORD "nnkxnpshmhai6"
-#else
-#define SSID     ""
-#define PASSWORD ""
-#endif
-
-Connect wifi;
+WebServerClass server;
+ESP32MSGraph   graph(&server);
 
 void wifi_test_001(void) {
 }
@@ -25,12 +17,10 @@ void wifi_test_002(void) {
 void setup() {
   delay(2000);
   UNITY_BEGIN();
-
-  // wifi.begin(SSID, PASSWORD);
-  wifi.begin();
+  graph.begin();
 }
 
 void loop() {
-  wifi.update();
+  graph.update();
+  delay(1000);
 }
-#endif

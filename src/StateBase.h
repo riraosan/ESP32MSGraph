@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <typeinfo>
 #include <Arduino.h>
 #include <Document.h>
 
@@ -68,6 +69,10 @@ public:
     entryRequest();
     doRequest();
     exitRequest();
+  }
+
+  void printStateName(void) {
+    log_i("Context: Now State is %s", typeid(*_state).name());
   }
 
 private:
