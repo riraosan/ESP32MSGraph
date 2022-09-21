@@ -57,22 +57,16 @@ public:
     this->_state->entryAction();
   }
 
-  void exitRequest(void) {
-    this->_state->exitAction();
-  }
-
   void doRequest(void) {
     this->_state->doActivity();
   }
 
-  void update(void) {
-    entryRequest();
-    doRequest();
-    exitRequest();
+  void exitRequest(void) {
+    this->_state->exitAction();
   }
 
   void printStateName(void) {
-    log_i("Context: Now State is %s", typeid(*_state).name());
+    log_i("--- Context: State is %s", typeid(*_state).name());
   }
 
 private:

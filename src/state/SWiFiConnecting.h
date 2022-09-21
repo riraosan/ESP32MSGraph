@@ -21,6 +21,7 @@ public:
 
   void doActivity(void) override {
     log_d("doActivity");
+    _doc->beginWiFi();
   }
 
   void exitAction(void) override {

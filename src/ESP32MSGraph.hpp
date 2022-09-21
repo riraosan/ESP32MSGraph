@@ -24,15 +24,17 @@ public:
     //_doc.attachSubscriber(_led);
     //_jsondoc.attachSubscriber(_html);
 
-    log_d("change starting");
-    _context->TransitionTo(new SInitialize(std::move(_doc)));  // State start
+    log_d("Starting state transitions");
+    _context->TransitionTo(new SInitialize(std::move(_doc)));
   }
 
   void update(void) {
 #if 1
     _context->printStateName();
 #endif
-    _context->update();
+    _context->entryRequest();
+    _context->doRequest();
+    _context->exitRequest();
     delay(1);
   }
 

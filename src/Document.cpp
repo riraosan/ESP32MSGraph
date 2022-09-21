@@ -25,22 +25,12 @@ Contributors:
 #include <FS.h>
 #include <SPIFFS.h>
 
-#include <IotWebConf.h>
 #include <ArduinoJson.h>
-#include <WS2812FX.h>
 #include <esp32-hal-log.h>
 
 #include <config.h>
 #include <filter.h>
 #include <Document.h>
-
-extern IotWebConfParameter _paramClientId;
-extern IotWebConfParameter _paramTenant;
-extern IotWebConfParameter _paramPollInterval;
-extern IotWebConfParameter _paramNumLeds;
-
-extern WS2812FX ws2812fx;
-// extern int      numberLeds;
 
 #ifndef DISABLECERTCHECK
 

@@ -25,7 +25,8 @@ public:
 
   void exitAction(void) override {
     log_d("exitAction");
-    this->_context->TransitionTo(new SAuthReady(std::move(_doc)));
+    delay(1000);
+    this->_context->TransitionTo(new SDeviceLoginStarted(std::move(_doc)));
   }
 
 private:

@@ -50,7 +50,12 @@ public:
   ~Document(void) {
   }
 
-  void update(void) {
+  void beginWiFi(void){
+    Connect::begin();
+  }
+
+  void updateWiFi(void){
+    Connect::update();
   }
 
   // user method

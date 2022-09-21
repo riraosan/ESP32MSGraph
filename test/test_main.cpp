@@ -17,10 +17,13 @@ void wifi_test_002(void) {
 void setup() {
   delay(2000);
   UNITY_BEGIN();
+
+  pinMode(0, OUTPUT);
+  digitalWrite(0, LOW);
+
   graph.begin();
 }
 
 void loop() {
   graph.update();
-  delay(1000);
 }
