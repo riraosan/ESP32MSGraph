@@ -16,17 +16,19 @@ public:
   }
 
   void entryAction(void) override {
-    log_d("entryAction");
+    // log_d("entryAction");
   }
 
   void doActivity(void) override {
-    log_d("doActivity");
+    // log_d("doActivity");
+    bool result = _doc->startDevicelogin();
+    if (result) {
+      this->_context->TransitionTo(new SPollToken(std::move(_doc)));
+    }
   }
 
   void exitAction(void) override {
-    log_d("exitAction");
-    delay(1000);
-    this->_context->TransitionTo(new SDeviceLoginStarted(std::move(_doc)));
+    // log_d("exitAction");
   }
 
 private:

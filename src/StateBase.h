@@ -54,19 +54,27 @@ public:
    * The Context delegates part of its behavior to the current State object.
    */
   void entryRequest(void) {
-    this->_state->entryAction();
+    if (_state) {
+      this->_state->entryAction();
+    }
   }
 
   void doRequest(void) {
-    this->_state->doActivity();
+    if (_state) {
+      this->_state->doActivity();
+    }
   }
 
   void exitRequest(void) {
-    this->_state->exitAction();
+    if (_state) {
+      this->_state->exitAction();
+    }
   }
 
   void printStateName(void) {
-    log_i("--- Context: State is %s", typeid(*_state).name());
+    if (_state) {
+      // log_i("--- Context: State is %s", typeid(*_state).name());
+    }
   }
 
 private:

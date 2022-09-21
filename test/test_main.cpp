@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include <WebServer.h>
-#include <ESP32MSGraph.hpp>
+#include <ESP32MSGraph.h>
 using WebServerClass = WebServer;
 
 WebServerClass server;

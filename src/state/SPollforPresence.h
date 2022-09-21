@@ -23,11 +23,12 @@ public:
 
   void doActivity(void) override {
     log_d("doActivity");
+    //TODO　プレゼンスを取得すること
+    //トークン有効時間が過ぎたら、トークンリフレッシュへ遷移すること
   }
 
   void exitAction(void) override {
     log_d("exitAction");
-    this->_context->TransitionTo(new SPollforPresence(std::move(_doc)));
   }
 
 private:

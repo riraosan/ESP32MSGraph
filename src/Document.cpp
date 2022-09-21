@@ -219,40 +219,37 @@ void Document::handleClearSettings() {
   ESP.restart();
 }
 
-void Document::startDevicelogin() {
+bool Document::startDevicelogin() {
+  // Request device login context
+  DynamicJsonDocument doc(JSON_OBJECT_SIZE(6) + 540);
 
-    // Request device login context
-    DynamicJsonDocument doc(JSON_OBJECT_SIZE(6) + 540);
+  bool res = requestJsonApi(doc,
+                            DeserializationOption::Filter(_loginFilter),
+                            "https://login.microsoftonline.com/" + _paramTenantValue + "/oauth2/v2.0/devicecode",
+                            "client_id=" + _paramClientIdValue + "&scope=offline_access%20openid%20Presence.Read");
 
-    bool res = requestJsonApi(doc,
-                              DeserializationOption::Filter(_loginFilter),
-                              "https://login.microsoftonline.com/" + _paramTenantValue + "/oauth2/v2.0/devicecode",
-                              "client_id=" + _paramClientIdValue + "&scope=offline_access%20openid%20Presence.Read");
+  if (res && doc.containsKey("device_code") && doc.containsKey("user_code") && doc.containsKey("interval") && doc.containsKey("verification_uri") && doc.containsKey("message")) {
+    // Save _device_code, _user_code and _interval
+    _device_code = doc["device_code"].as<String>();
+    _user_code   = doc["user_code"].as<String>();
+    _interval    = doc["interval"].as<unsigned int>();
 
-    if (res && doc.containsKey("device_code") && doc.containsKey("user_code") && doc.containsKey("interval") && doc.containsKey("verification_uri") && doc.containsKey("message")) {
-      // Save _device_code, _user_code and _interval
-      _device_code = doc["device_code"].as<String>();
-      _user_code   = doc["user_code"].as<String>();
-      _interval    = doc["interval"].as<unsigned int>();
+    // Prepare response JSON
+    //ここで、ドキュメントクラスにメンバー変数にユーザーコードを保存できること
+    // このデータを使って、AutoConnectの画面にユーザーコードを表示できること
+    DynamicJsonDocument responseDoc(JSON_OBJECT_SIZE(3));
+    responseDoc["user_code"]        = doc["user_code"].as<const char*>();
+    responseDoc["verification_uri"] = doc["verification_uri"].as<const char*>();
+    responseDoc["message"]          = doc["message"].as<const char*>();
 
-      // Prepare response JSON
-      DynamicJsonDocument responseDoc(JSON_OBJECT_SIZE(3));
-      responseDoc["user_code"]        = doc["user_code"].as<const char*>();
-      responseDoc["verification_uri"] = doc["verification_uri"].as<const char*>();
-      responseDoc["message"]          = doc["message"].as<const char*>();
-
-      // Set state, update polling timestamp
-      //_state     = SMODEDEVICELOGINSTARTED;
-      _tsPolling = millis() + (_interval * 1000);
-
-      // Send JSON response
-      //_server->send(200, "application/json", responseDoc.as<String>());
-    } else {
-      _server->send(500, "application/json", "{\"error\": \"devicelogin_unknown_response\"}");
-    }
-  // } else {
-  //   _server->send(409, "application/json", "{\"error\": \"devicelogin_already_running\"}");
-  // }
+    // Send JSON response
+    _server->send(200, "application/json", responseDoc.as<String>());
+    return true;
+  } else {
+    _server->send(500, "application/json", "{\"error\": \"devicelogin_unknown_response\"}");
+    return false;
+  }
+  return false;
 }
 
 /**
@@ -319,18 +316,18 @@ bool Document::handleFileRead(String path) {
 }
 
 // Poll for access token
-void Document::pollForToken(void) {
+bool Document::pollForToken(void) {
+  bool   success = false;
   String payload = "client_id=" + String(_paramClientIdValue) + "&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=" + _device_code;
 
   DynamicJsonDocument responseDoc(JSON_OBJECT_SIZE(7) + 5000);
 
   bool res = requestJsonApi(responseDoc,
                             DeserializationOption::Filter(_refleshtokenFilter),
-                            "https://login.microsoftonline.com/" + String(_paramTenantValue) + "/oauth2/v2.0/token",
-                            payload);
+                            "https://login.microsoftonline.com/" + String(_paramTenantValue) + "/oauth2/v2.0/token", payload);
 
   if (!res) {
-    //_state = SMODEDEVICELOGINFAILED;
+    success = false;
   } else if (responseDoc.containsKey("error")) {
     const char* _error             = responseDoc["error"];
     const char* _error_description = responseDoc["error_description"];
@@ -339,33 +336,36 @@ void Document::pollForToken(void) {
       log_i("pollForToken() - Wating for authorization by user: %s", _error_description);
     } else {
       log_e("pollForToken() - Unexpected error: %s, %s", _error, _error_description);
-      //_state = SMODEDEVICELOGINFAILED;
     }
+
+    success = false;
   } else {
     if (responseDoc.containsKey("access_token") && responseDoc.containsKey("refresh_token") && responseDoc.containsKey("id_token")) {
       // Save tokens and expiration
       unsigned int _expires_in = responseDoc["expires_in"].as<unsigned int>();
-      _access_token             = responseDoc["access_token"].as<String>();
+      _access_token            = responseDoc["access_token"].as<String>();
       _refresh_token           = responseDoc["refresh_token"].as<String>();
-      _id_token                 = responseDoc["id_token"].as<String>();
-      _expires                 = millis() + (_expires_in * 1000);  // Calculate timestamp when token _expires
-
-      // Set state
-      //_state = SMODEAUTHREADY;
+      _id_token                = responseDoc["id_token"].as<String>();
+      _expires                 = _expires_in * 1000;  // ms
 
       log_i("Set : SMODEAUTHREADY");
+      success = true;
     } else {
       log_e("pollForToken() - Unknown response: ");
+      success = false;
     }
   }
+  return false;
 }
 
 // Refresh the access token
 bool Document::refreshToken(void) {
+  log_d("refreshToken()");
+
   bool success = false;
+
   // See: https://docs.microsoft.com/de-de/azure/active-directory/develop/v1-protocols-oauth-code#refreshing-the-access-tokens
   String payload = "client_id=" + _paramClientIdValue + "&grant_type=refresh_token&refresh_token=" + _refresh_token;
-  log_d("refreshToken()");
 
   DynamicJsonDocument responseDoc(6144);  // from ArduinoJson Assistant
 
@@ -378,59 +378,35 @@ bool Document::refreshToken(void) {
   if (res && responseDoc.containsKey("access_token") && responseDoc.containsKey("refresh_token")) {
     if (!responseDoc["access_token"].isNull()) {
       _access_token = responseDoc["access_token"].as<String>();
-      success      = true;
     }
+
     if (!responseDoc["refresh_token"].isNull()) {
       _refresh_token = responseDoc["refresh_token"].as<String>();
-      success        = true;
     }
+
     if (!responseDoc["id_token"].isNull()) {
       _id_token = responseDoc["id_token"].as<String>();
     }
+
     if (!responseDoc["expires_in"].isNull()) {
       int _expires_in = responseDoc["expires_in"].as<unsigned int>();
       _expires        = millis() + (_expires_in * 1000);  // Calculate timestamp when token _expires
     }
 
-    log_d("refreshToken() - Success");
     //_state = SMODEPOLLPRESENCE;
+    log_d("refreshToken() - Success");
+    success = true;
   } else {
     log_d("refreshToken() - Error:");
     // Set retry after timeout
-    _tsPolling = millis() + (DEFAULT_ERROR_RETRY_INTERVAL * 1000);
+    //_tsPolling = millis() + (DEFAULT_ERROR_RETRY_INTERVAL * 1000);
+    success = false;
   }
   return success;
 }
 
 // Implementation of a statemachine to handle the different application states
 // void Document::statemachine(void) {
-//   // Statemachine: Check states of iotWebConf to detect AP mode and WiFi Connection attempt
-//   byte iotWebConfState = _iotWebConf->getState();
-//   if (iotWebConfState != _lastIotWebConfState) {
-//     if (iotWebConfState == IOTWEBCONF_STATE_NOT_CONFIGURED || iotWebConfState == IOTWEBCONF_STATE_AP_MODE) {
-//       log_d("Detected AP mode");
-//       setAnimation(0, FX_MODE_THEATER_CHASE, WHITE);
-//     }
-//     if (iotWebConfState == IOTWEBCONF_STATE_CONNECTING) {
-//       log_d("WiFi connecting");
-//       _state = SMODEWIFICONNECTING;
-//     }
-//   }
-//   //_lastIotWebConfState = iotWebConfState;
-
-//   // Statemachine: Wifi connection start
-//   if (_state == SMODEWIFICONNECTING && _laststate != SMODEWIFICONNECTING) {
-//     setAnimation(0, FX_MODE_THEATER_CHASE, BLUE);
-//   }
-
-//   // Statemachine: After wifi is connected
-//   if (_state == SMODEWIFICONNECTED && _laststate != SMODEWIFICONNECTED) {
-//     setAnimation(0, FX_MODE_THEATER_CHASE, GREEN);
-//     // startMDNS();
-//     loadContext();
-//     // WiFi client
-//     log_d("Wifi connected, waiting for requests ...");
-//   }
 
 //   // Statemachine: Devicelogin started
 //   if (_state == SMODEDEVICELOGINSTARTED) {

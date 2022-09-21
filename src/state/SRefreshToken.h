@@ -20,11 +20,17 @@ public:
 
   void doActivity(void) override {
     log_d("doActivity");
+
+    //TODO トークン有効時間がすぎたら以下を実行する（タイマーを実行すればいい？）
+    bool success = refreshToken();
+    if (success) {
+      saveContext();
+      this->_context->TransitionTo(new SPollforPresence(std::move(_doc)));
+    }
   }
 
   void exitAction(void) override {
     log_d("exitAction");
-    this->_context->TransitionTo(new SRefreshToken(std::move(_doc)));
   }
 
 private:

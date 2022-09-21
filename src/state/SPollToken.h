@@ -20,11 +20,13 @@ public:
 
   void doActivity(void) override {
     log_d("doActivity");
+    //TOFO　トークンが取れた場合SAuthReadyへ遷移すること
+    this->_context->TransitionTo(new SPollToken(std::move(_doc)));
+
   }
 
   void exitAction(void) override {
     log_d("exitAction");
-    this->_context->TransitionTo(new SPollToken(std::move(_doc)));
   }
 
 private:

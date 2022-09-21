@@ -31,13 +31,12 @@ Contributors:
 #include <SPIFFS.h>
 #include <ArduinoJson.h>
 #include <WebServer.h>
-#include <Connect.hpp>
 using WebServerClass = WebServer;
 
-class Document : public Connect {
+class Document  {
 public:
   // Document(void) {}
-  Document(WebServerClass *server) : Connect(server),
+  Document(WebServerClass *server) : _server(server),
                                      _tsPolling(0),
                                      _expires(0),
                                      _interval(5),
@@ -48,14 +47,6 @@ public:
   }
 
   ~Document(void) {
-  }
-
-  void beginWiFi(void){
-    Connect::begin();
-  }
-
-  void updateWiFi(void){
-    Connect::update();
   }
 
   // user method
@@ -75,7 +66,6 @@ public:
     _paramTenantValue = tenant;
   }
 
-protected:
   // for WebUI
   // API request handler
   bool   requestJsonApi(JsonDocument &doc, ARDUINOJSON_NAMESPACE::Filter filter, String url, String payload = "", String type = "POST", bool sendAuth = false);
@@ -88,13 +78,15 @@ protected:
   void removeContext(void);
 
   // for Azure AD login
-  void pollForToken(void);
+  bool pollForToken(void);
   bool refreshToken(void);
-  void startDevicelogin(void);
+  bool startDevicelogin(void);
 
   int getTokenLifetime(void);
 
 private:
+  WebServerClass *_server;
+
   unsigned long _tsPolling;
   unsigned int  _expires;
 
