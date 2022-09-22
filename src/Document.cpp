@@ -97,6 +97,14 @@ int Document::getTokenLifetime() {
   return (_expires - millis()) / 1000;
 }
 
+String Document::getDeviceCode(void) {
+  return _device_code;
+}
+
+String Document::getUserCode(void) {
+  return _user_code;
+}
+
 void Document::removeContext() {
   SPIFFS.remove(CONTEXT_FILE);
   log_d("removeContext() - Success");
@@ -148,15 +156,15 @@ bool Document::requestJsonApi(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter f
         // Parse JSON data
         DeserializationError error = deserializeJson(doc, https.getStream(), filter);
 
-        // serializeJsonPretty(doc, Serial);
-        // Serial.println();
+        serializeJsonPretty(doc, Serial);
+        Serial.println();
 
         if (error) {
           log_e("deserializeJson() failed: %s", error.c_str());
           https.end();
           return false;
         } else {
-          log_i("deserializeJson() Success: %s", error.c_str());
+          // log_i("deserializeJson() Success: %s", error.c_str());
           https.end();
           return true;
         }
@@ -219,6 +227,14 @@ void Document::handleClearSettings() {
   ESP.restart();
 }
 
+// {
+//   "user_code": "SZVKQXTYC",
+//   "device_code": "xxx",
+//   "verification_uri": "https://microsoft.com/devicelogin",
+//   "expires_in": 900,
+//   "interval": 5,
+//   "message": "To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code SZVKQXTYC to authenticate."
+// }
 bool Document::startDevicelogin() {
   // Request device login context
   DynamicJsonDocument doc(JSON_OBJECT_SIZE(6) + 540);
@@ -228,26 +244,25 @@ bool Document::startDevicelogin() {
                             "https://login.microsoftonline.com/" + _paramTenantValue + "/oauth2/v2.0/devicecode",
                             "client_id=" + _paramClientIdValue + "&scope=offline_access%20openid%20Presence.Read");
 
-  if (res && doc.containsKey("device_code") && doc.containsKey("user_code") && doc.containsKey("interval") && doc.containsKey("verification_uri") && doc.containsKey("message")) {
-    // Save _device_code, _user_code and _interval
-    _device_code = doc["device_code"].as<String>();
-    _user_code   = doc["user_code"].as<String>();
-    _interval    = doc["interval"].as<unsigned int>();
+  if (res) {
+    if (doc.containsKey("device_code") && doc.containsKey("user_code") && doc.containsKey("interval") && doc.containsKey("verification_uri") && doc.containsKey("message")) {
+      // Save _device_code, _user_code and _interval
+      _user_code        = doc["user_code"].as<String>();
+      _device_code      = doc["device_code"].as<String>();
+      _verification_uri = doc["verification_uri"].as<String>();
+      _expires          = doc["expires_in"].as<unsigned int>();
+      _interval         = doc["interval"].as<unsigned int>();
+      _message          = doc["message"].as<String>();
 
-    // Prepare response JSON
-    //ここで、ドキュメントクラスにメンバー変数にユーザーコードを保存できること
-    // このデータを使って、AutoConnectの画面にユーザーコードを表示できること
-    // DynamicJsonDocument responseDoc(JSON_OBJECT_SIZE(3));
-    // responseDoc["user_code"]        = doc["user_code"].as<const char*>();
-    // responseDoc["verification_uri"] = doc["verification_uri"].as<const char*>();
-    // responseDoc["message"]          = doc["message"].as<const char*>();
-
-    // Send JSON response
-    _server->send(200, "application/json", doc.as<String>());
-    return true;
+      // Send JSON response
+      _server->send(200, "application/json", doc.as<String>());
+      return true;
+    } else {
+      _server->send(500, "application/json", "{\"error\": \"devicelogin_unknown_response\"}");
+      return false;
+    }
   } else {
-    _server->send(500, "application/json", "{\"error\": \"devicelogin_unknown_response\"}");
-    return false;
+    log_e("response fail.");
   }
   return false;
 }
@@ -315,27 +330,45 @@ bool Document::handleFileRead(String path) {
   return false;
 }
 
+/*
+{
+  "token_type": "Bearer",
+  "scope": "openid Presence.Read profile email",
+  "expires_in": 4870,
+  "ext_expires_in": 4870,
+  "access_token": "",
+  "refresh_token": "",
+  "id_token": ""
+}
+*/
+
 // Poll for access token
 bool Document::pollForToken(void) {
   bool   success = false;
-  String payload = "client_id=" + String(_paramClientIdValue) + "&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=" + _device_code;
+  String payload("client_id=" + String(_paramClientIdValue) + "&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=" + _device_code);
+  String url("https://login.microsoftonline.com/" + String(_paramTenantValue) + "/oauth2/v2.0/token");
 
   DynamicJsonDocument responseDoc(JSON_OBJECT_SIZE(7) + 5000);
 
+  log_i("payload = %s", payload.c_str());
+  log_i("url     = %s", url.c_str());
+
   bool res = requestJsonApi(responseDoc,
                             DeserializationOption::Filter(_refleshtokenFilter),
-                            "https://login.microsoftonline.com/" + String(_paramTenantValue) + "/oauth2/v2.0/token", payload);
+                            url,
+                            payload);
 
   if (!res) {
+    log_e("response failer");
     success = false;
   } else if (responseDoc.containsKey("error")) {
     const char* _error             = responseDoc["error"];
     const char* _error_description = responseDoc["error_description"];
 
     if (strcmp(_error, "authorization_pending") == 0) {
-      log_i("pollForToken() - Wating for authorization by user: %s", _error_description);
+      log_i("Wating for authorization by user: %s", _error_description);
     } else {
-      log_e("pollForToken() - Unexpected error: %s, %s", _error, _error_description);
+      log_e("Unexpected error: %s, %s", _error, _error_description);
     }
 
     success = false;
@@ -351,7 +384,7 @@ bool Document::pollForToken(void) {
       log_i("Set : SMODEAUTHREADY");
       success = true;
     } else {
-      log_e("pollForToken() - Unknown response: ");
+      log_e("No response: ");
       success = false;
     }
   }

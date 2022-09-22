@@ -51,6 +51,10 @@ public:
     this->_state->setContext(this);
   }
 
+  State *getState(void) {
+    return this->_state;
+  }
+
   /**
    * The Context delegates part of its behavior to the current State object.
    */
@@ -72,8 +76,8 @@ public:
     }
   }
 
-  void update(void){
-    if(_state){
+  void update(void) {
+    if (_state) {
       this->_state->update();
     }
   }

@@ -15,7 +15,7 @@ public:
   SDeviceLoginStarted(std::shared_ptr<Document> doc) : _doc(doc) {
   }
 
-  //timer event
+  // timer event
   static void IntervalTimer(void) {
     _timer = true;
   }
@@ -54,4 +54,4 @@ private:
   std::shared_ptr<Document> _doc;
 };
 
-bool SDeviceLoginStarted::_timer = false;
+bool SDeviceLoginStarted::_timer = true;

@@ -30,7 +30,7 @@ public:
       // TODO トークンを保存する
       exitAction();
     } else {
-      _ticker.once(10, IntervalTimer);
+      _ticker.once(30, IntervalTimer);
     }
   }
 
@@ -47,6 +47,14 @@ public:
     }
   }
 
+  String getDeviceCode(void) {
+    return _doc->getDeviceCode();
+  }
+
+  String getUserCode(void) {
+    return _doc->getUserCode();
+  }
+
 private:
   Ticker      _ticker;
   static bool _timer;
@@ -54,4 +62,4 @@ private:
   std::shared_ptr<Document> _doc;
 };
 
-bool SPollToken::_timer = false;
+bool SPollToken::_timer = true;

@@ -33,7 +33,7 @@ Contributors:
 #include <WebServer.h>
 using WebServerClass = WebServer;
 
-class Document  {
+class Document {
 public:
   // Document(void) {}
   Document(WebServerClass *server) : _server(server),
@@ -82,13 +82,14 @@ public:
   bool refreshToken(void);
   bool startDevicelogin(void);
 
-  int getTokenLifetime(void);
+  int    getTokenLifetime(void);
+  String getDeviceCode(void);
+  String getUserCode(void);
 
 private:
   WebServerClass *_server;
 
   unsigned long _tsPolling;
-  unsigned int  _expires;
 
   String _paramClientIdValue;
   String _paramTenantValue;
@@ -98,9 +99,12 @@ private:
   String _refresh_token;
   String _id_token;
 
-  String  _user_code;
-  String  _device_code;
-  uint8_t _interval;
+  String   _user_code;
+  String   _device_code;
+  String   _verification_uri;
+  uint32_t _expires;
+  uint8_t  _interval;
+  String   _message;
 
   uint8_t _retries;
 

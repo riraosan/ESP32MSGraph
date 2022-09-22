@@ -12,6 +12,7 @@
 #include <StateBase.h>
 #include "./state/SDeviceLoginStarted.h"
 #include "./state/SInitialize.h"
+#include "./state/SPollToken.h"
 using WebServerClass = WebServer;
 #else
 #error Only for ESP32
@@ -136,7 +137,8 @@ We will go to next page...
     });
 
     _portal.on("/lauchdevicelogin", [&](AutoConnectAux& aux, PageArgument& args) -> String {
-      aux["devicecode"].as<AutoConnectInput>().value = _deviceCode;
+      SPollToken* state                              = (SPollToken*)_context->getState();
+      aux["devicecode"].as<AutoConnectInput>().value = state->getUserCode();
       return String();
     });
 
@@ -226,5 +228,4 @@ private:
 
   String _clientIdValue;
   String _tenantValue;
-  String _deviceCode;
 };

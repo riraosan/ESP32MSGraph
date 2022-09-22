@@ -56,4 +56,4 @@ private:
   std::shared_ptr<Document> _doc;
 };
 
-bool SRefreshToken::_timer = false;
+bool SRefreshToken::_timer = true;
