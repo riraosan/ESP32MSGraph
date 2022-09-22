@@ -19,6 +19,7 @@ public:
   virtual void entryAction(void) = 0;
   virtual void doActivity(void)  = 0;
   virtual void exitAction(void)  = 0;
+  virtual void update(void)      = 0;
 
 protected:
   Context *_context;
@@ -68,6 +69,12 @@ public:
   void exitRequest(void) {
     if (_state) {
       this->_state->exitAction();
+    }
+  }
+
+  void update(void){
+    if(_state){
+      this->_state->update();
     }
   }
 

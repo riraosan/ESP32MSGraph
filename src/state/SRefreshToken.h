@@ -6,34 +6,55 @@
 #include <StateBase.h>
 #include <Document.h>
 #include <ArduinoJson.h>
-
-//自己遷移
+#include <Ticker.h>
+#include "SAuthReady.h"
 
 class SRefreshToken : public State {
 public:
   SRefreshToken(std::shared_ptr<Document> doc) : _doc(doc) {
   }
 
+  static void IntervalTimer(void) {
+    _timer = true;
+  }
+
   void entryAction(void) override {
     log_d("entryAction");
+    //無し
   }
 
   void doActivity(void) override {
     log_d("doActivity");
 
-    //TODO トークン有効時間がすぎたら以下を実行する（タイマーを実行すればいい？）
-    bool success = refreshToken();
+    // TODO トークン有効時間がすぎたら以下を実行する（タイマーを実行すればいい？）
+    bool success = _doc->refreshToken();
     if (success) {
-      saveContext();
-      this->_context->TransitionTo(new SPollforPresence(std::move(_doc)));
+      // TODO トークンを保存できること
+      exitAction();
+    } else {
+      _ticker.once(10, IntervalTimer);
     }
   }
 
   void exitAction(void) override {
     log_d("exitAction");
+    this->_context->TransitionTo(new SAuthReady(std::move(_doc)));
+  }
+
+  void update(void) override {
+    if (_timer) {
+      entryAction();
+      doActivity();
+      _timer = false;
+    }
   }
 
 private:
+  static bool _timer;
+  Ticker      _ticker;
+
   std::shared_ptr<Document> _doc;
   StaticJsonDocument<200>   _refleshtokenFilter;  //トークン再取得に使用
 };
+
+bool SRefreshToken::_timer = false;

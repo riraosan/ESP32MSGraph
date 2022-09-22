@@ -1,15 +1,11 @@
 
-#pragma once
+//#pragma once
 
 #include <memory>
 #include <Arduino.h>
 #include <StateBase.h>
 #include <Document.h>
 #include <ArduinoJson.h>
-#include "SPollforPresence.h"
-
-//遷移先
-#include "SPollToken.h"
 
 class SAuthReady : public State {
 public:
@@ -18,16 +14,20 @@ public:
 
   void entryAction(void) override {
     log_d("entryAction");
+    //TODO タイマーを設定する（トークン有効時間）
   }
 
   void doActivity(void) override {
     log_d("doActivity");
-    //_doc->saveContext();
-    this->_context->TransitionTo(new SPollforPresence(std::move(_doc)));
+    //TODO　トークン有効時間内に一回だけトークンをリフレッシュすること
   }
 
   void exitAction(void) override {
     log_d("exitAction");
+  }
+
+  void update(void){
+
   }
 
 private:

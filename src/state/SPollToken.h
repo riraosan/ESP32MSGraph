@@ -6,12 +6,16 @@
 #include <StateBase.h>
 #include <Document.h>
 #include <ArduinoJson.h>
-
-//自己遷移
+#include <Ticker.h>
+#include "SAuthReady.h"
 
 class SPollToken : public State {
 public:
   SPollToken(std::shared_ptr<Document> doc) : _doc(doc) {
+  }
+
+  static void IntervalTimer(void) {
+    _timer = true;
   }
 
   void entryAction(void) override {
@@ -20,16 +24,35 @@ public:
 
   void doActivity(void) override {
     log_d("doActivity");
-    //TOFO　トークンが取れた場合SAuthReadyへ遷移すること
-    this->_context->TransitionTo(new SPollToken(std::move(_doc)));
-
+    // TOFO　トークンが取れた場合SAuthReadyへ遷移すること
+    bool success = _doc->pollForToken();
+    if (success) {
+      // TODO トークンを保存する
+      exitAction();
+    } else {
+      _ticker.once(10, IntervalTimer);
+    }
   }
 
   void exitAction(void) override {
     log_d("exitAction");
+    this->_context->TransitionTo(new SAuthReady(std::move(_doc)));
+  }
+
+  void update(void) override {
+    if (_timer) {
+      entryAction();
+      doActivity();
+      _timer = false;
+    }
   }
 
 private:
+  Ticker      _ticker;
+  static bool _timer;
+
   std::shared_ptr<Document> _doc;
   StaticJsonDocument<200>   _refleshtokenFilter;  //トークン再取得に使用
 };
+
+bool SPollToken::_timer = false;

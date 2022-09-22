@@ -10,7 +10,6 @@
 #include <ESPmDNS.h>
 #include <AutoConnect.h>
 #include <StateBase.h>
-#include <Ticker.h>
 #include "./state/SDeviceLoginStarted.h"
 #include "./state/SInitialize.h"
 using WebServerClass = WebServer;
@@ -75,10 +74,6 @@ We will go to next page...
     begin("", "");
   }
 
-  static void timerON(void) {
-    _timer = true;
-  }
-
   bool getDetect(void) {
     return _isDetect;
   }
@@ -129,8 +124,6 @@ We will go to next page...
 
       log_d("Starting state transitions");
       _context->TransitionTo(new SDeviceLoginStarted(std::move(_doc)));
-
-      _IntervalTimer.once(2, timerON);
 
       _server->send(200, "text/html", _pleasewait);  //次の画面へ遷移
     });
@@ -196,13 +189,7 @@ We will go to next page...
   void update(void) {
     _portal.handleClient();
 
-    if (_timer) {
-      _context->printStateName();
-      _context->entryRequest();
-      _context->doRequest();
-      _context->exitRequest();
-      _timer = false;
-    }
+    _context->update();
 
     delay(1);
   }
@@ -243,8 +230,4 @@ private:
   String _clientIdValue;
   String _tenantValue;
   String _deviceCode;
-
-  static bool _timer;
 };
-
-bool ESP32MSGraph::_timer = false;

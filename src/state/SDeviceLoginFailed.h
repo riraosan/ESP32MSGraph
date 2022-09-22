@@ -8,7 +8,7 @@
 #include <ArduinoJson.h>
 
 //遷移先
-#include "SInitialize.h"
+#include "SDeviceLoginStarted.h"
 
 class SDeviceLoginFailed : public State {
 public:
@@ -21,12 +21,18 @@ public:
 
   void doActivity(void) override {
     log_d("doActivity");
+    exitAction();
   }
 
   void exitAction(void) override {
     log_d("exitAction");
-    // this->_context->TransitionTo(new SDeviceLoginStarted(std::move(_doc)));
-    this->_context->TransitionTo(new SInitialize(std::move(_doc)));
+    this->_context->TransitionTo(new SDeviceLoginStarted(std::move(_doc)));
+  }
+
+  void update(void) override {
+    log_d("update");
+    entryAction();
+    doActivity();
   }
 
 private:

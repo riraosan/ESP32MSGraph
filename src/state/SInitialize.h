@@ -24,6 +24,10 @@ public:
     log_d("exitAction");
   }
 
+  void update(void) override {
+    log_d("update");
+  }
+
 private:
   std::shared_ptr<Document> _doc;
 };
