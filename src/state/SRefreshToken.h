@@ -54,7 +54,6 @@ private:
   Ticker      _ticker;
 
   std::shared_ptr<Document> _doc;
-  StaticJsonDocument<200>   _refleshtokenFilter;  //トークン再取得に使用
 };
 
 bool SRefreshToken::_timer = false;

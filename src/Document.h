@@ -105,7 +105,6 @@ private:
   uint8_t _retries;
 
   StaticJsonDocument<200> _loginFilter;         //初回ログインに使用
-  StaticJsonDocument<200> _tokenFilter;         //トークン取得に使用
   StaticJsonDocument<200> _refleshtokenFilter;  //トークン再取得に使用
   StaticJsonDocument<200> _presenceFilter;      //在籍情報取得時に使用
 };

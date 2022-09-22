@@ -52,7 +52,6 @@ private:
   static bool _timer;
 
   std::shared_ptr<Document> _doc;
-  StaticJsonDocument<200>   _refleshtokenFilter;  //トークン再取得に使用
 };
 
 bool SPollToken::_timer = false;

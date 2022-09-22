@@ -155,7 +155,6 @@ We will go to next page...
 
     _portal.onConnect([&](IPAddress& ip) {
       log_d("onConnect");
-      //_context->TransitionTo(new SInitialize(std::move(_doc)));
       setConnect(true);
     });
 
@@ -201,8 +200,6 @@ protected:
   WebServerClass*   _server;
   AutoConnectConfig _config;
   AutoConnect       _portal;
-
-  Ticker _IntervalTimer;
 
 private:
   AutoConnectAux    _loginconfig;

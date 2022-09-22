@@ -237,13 +237,13 @@ bool Document::startDevicelogin() {
     // Prepare response JSON
     //ここで、ドキュメントクラスにメンバー変数にユーザーコードを保存できること
     // このデータを使って、AutoConnectの画面にユーザーコードを表示できること
-    DynamicJsonDocument responseDoc(JSON_OBJECT_SIZE(3));
-    responseDoc["user_code"]        = doc["user_code"].as<const char*>();
-    responseDoc["verification_uri"] = doc["verification_uri"].as<const char*>();
-    responseDoc["message"]          = doc["message"].as<const char*>();
+    // DynamicJsonDocument responseDoc(JSON_OBJECT_SIZE(3));
+    // responseDoc["user_code"]        = doc["user_code"].as<const char*>();
+    // responseDoc["verification_uri"] = doc["verification_uri"].as<const char*>();
+    // responseDoc["message"]          = doc["message"].as<const char*>();
 
     // Send JSON response
-    _server->send(200, "application/json", responseDoc.as<String>());
+    _server->send(200, "application/json", doc.as<String>());
     return true;
   } else {
     _server->send(500, "application/json", "{\"error\": \"devicelogin_unknown_response\"}");

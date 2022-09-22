@@ -37,5 +37,4 @@ public:
 
 private:
   std::shared_ptr<Document> _doc;
-  StaticJsonDocument<200>   _presenceFilter;  //在籍情報取得時に使用
 };
