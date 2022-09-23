@@ -105,11 +105,6 @@ String Document::getUserCode(void) {
   return _user_code;
 }
 
-void Document::removeContext() {
-  SPIFFS.remove(CONTEXT_FILE);
-  log_d("removeContext() - Success");
-}
-
 /**
  * API request handler
  */
@@ -213,20 +208,6 @@ void Document::handleGetSettings() {
   // _server->send(200, "application/json", responseDoc.as<String>());
 }
 
-// Delete EEPROM by removing the trailing sequence, remove context file
-void Document::handleClearSettings() {
-  log_d("handleClearSettings()");
-
-  for (int t = 0; t < 4; t++) {
-    EEPROM.write(t, 0);
-  }
-  EEPROM.commit();
-  removeContext();
-
-  //_server->send(200, "application/json", "{\"action\": \"clear_settings\", \"error\": false}");
-  ESP.restart();
-}
-
 // {
 //   "user_code": "SZVKQXTYC",
 //   "device_code": "xxx",
@@ -263,69 +244,6 @@ bool Document::startDevicelogin() {
     }
   } else {
     log_e("response fail.");
-  }
-  return false;
-}
-
-/**
- * SPIFFS webserver
- */
-bool Document::exists(String path) {
-  bool yes  = false;
-  File file = SPIFFS.open(path, "r");
-  if (!file.isDirectory()) {
-    yes = true;
-  }
-  file.close();
-  return yes;
-}
-
-String Document::getContentType(String filename) {
-  if (_server->hasArg("download")) {
-    return "application/octet-stream";
-  } else if (filename.endsWith(".htm")) {
-    return "text/html";
-  } else if (filename.endsWith(".html")) {
-    return "text/html";
-  } else if (filename.endsWith(".css")) {
-    return "text/css";
-  } else if (filename.endsWith(".js")) {
-    return "application/javascript";
-  } else if (filename.endsWith(".png")) {
-    return "image/png";
-  } else if (filename.endsWith(".gif")) {
-    return "image/gif";
-  } else if (filename.endsWith(".jpg")) {
-    return "image/jpeg";
-  } else if (filename.endsWith(".ico")) {
-    return "image/x-icon";
-  } else if (filename.endsWith(".xml")) {
-    return "text/xml";
-  } else if (filename.endsWith(".pdf")) {
-    return "application/x-pdf";
-  } else if (filename.endsWith(".zip")) {
-    return "application/x-zip";
-  } else if (filename.endsWith(".gz")) {
-    return "application/x-gzip";
-  }
-  return "text/plain";
-}
-
-bool Document::handleFileRead(String path) {
-  log_d("handleFileRead: %s", path);
-  if (path.endsWith("/")) {
-    path += "index.htm";
-  }
-  String contentType = getContentType(path);
-  String pathWithGz  = path + ".gz";
-  if (exists(pathWithGz) || exists(path)) {
-    if (exists(pathWithGz)) {
-      path += ".gz";
-    }
-    File file = SPIFFS.open(path, "r");
-    _server->streamFile(file, contentType);
-    file.close();
-    return true;
   }
   return false;
 }
@@ -438,85 +356,51 @@ bool Document::refreshToken(void) {
   return success;
 }
 
-// Implementation of a statemachine to handle the different application states
-// void Document::statemachine(void) {
+// TODO
+// Get presence information
+// user method
+void Document::pollPresence(void) {
+  log_d("pollPresence()");
+  // See: https://github.com/microsoftgraph/microsoft-graph-docs/blob/ananya/api-reference/beta/resources/presence.md
+  const size_t        capacity = JSON_OBJECT_SIZE(4) + 500;
+  DynamicJsonDocument responseDoc(capacity);
 
-//   // Statemachine: Devicelogin started
-//   if (_state == SMODEDEVICELOGINSTARTED) {
-//     // log_d("SMODEDEVICELOGINSTARTED");
-//     if (_laststate != SMODEDEVICELOGINSTARTED) {
-//       setAnimation(0, FX_MODE_THEATER_CHASE, PURPLE);
-//       log_d("Device login failed");
-//     }
-//     if (millis() >= _tsPolling) {
-//       pollForToken();
-//       _tsPolling = millis() + (_interval * 1000);
-//       log_d("pollForToken");
-//     }
-//   }
+  bool res = requestJsonApi(responseDoc,
+                            DeserializationOption::Filter(_presenceFilter),
+                            "https://graph.microsoft.com/v1.0/me/presence",
+                            "",
+                            "GET",
+                            true);
 
-//   // Statemachine: Devicelogin failed
-//   if (_state == SMODEDEVICELOGINFAILED) {
-//     log_d("Device login failed");
-//     _state = SMODEWIFICONNECTED;  // Return back to initial mode
-//   }
+  if (!res) {
+    _retries++;
+    log_e("Presence request error. retry:#%d", _retries);
+  } else if (responseDoc.containsKey("error")) {
+    const char* _error_code = responseDoc["error"]["code"];
+    if (strcmp(_error_code, "InvalidAuthenticationToken")) {
+      log_e("pollPresence() - Refresh needed");
+      _tsPolling = millis();
+    } else {
+      log_e("pollPresence() - Error: %s\n", _error_code);
+      _retries++;
+    }
+  } else {
+    log_i("success to get Presence");
 
-//   // Statemachine: Auth is ready, start polling for presence immediately
-//   if (_state == SMODEAUTHREADY) {
-//     saveContext();
-//     _state     = SMODEPOLLPRESENCE;
-//     _tsPolling = millis();
-//   }
+    // Store presence info
+    // availability = responseDoc["availability"].as<String>();
+    // activity     = responseDoc["activity"].as<String>();
+    // _retries     = 0;
 
-//   // Statemachine: Poll for presence information, even if there was a error before (handled below)
-//   if (_state == SMODEPOLLPRESENCE) {
-//     if (millis() >= _tsPolling) {
-//       log_i("%s", "Polling presence info ...");
-//       pollPresence();
-//       _tsPolling = millis() + (atoi(_paramPollIntervalValue.c_str()) * 1000);
-//       log_i("--> Availability: %s, Activity: %s", availability.c_str(), activity.c_str());
-//     }
+    // // TODO
+    // setPresenceAnimation();
+  }
+}
 
-//     if (getTokenLifetime() < TOKEN_REFRESH_TIMEOUT) {
-//       log_w("Token needs refresh, valid for %d s.", getTokenLifetime());
-//       _state = SMODEREFRESHTOKEN;
-//     }
-//   }
-
-//   // Statemachine: Refresh token
-//   if (_state == SMODEREFRESHTOKEN) {
-//     if (_laststate != SMODEREFRESHTOKEN) {
-//       setAnimation(0, FX_MODE_THEATER_CHASE, RED);
-//     }
-//     if (millis() >= _tsPolling) {
-//       boolean success = refreshToken();
-//       if (success) {
-//         saveContext();
-//       }
-//     }
-//   }
-
-//   // Statemachine: Polling presence failed
-//   if (_state == SMODEPRESENCEREQUESTERROR) {
-//     if (_laststate != SMODEPRESENCEREQUESTERROR) {
-//       _retries = 0;
-//     }
-
-//     log_e("Polling presence failed, retry #%d.", _retries);
-//     if (_retries >= 5) {
-//       // Try token refresh
-//       _state = SMODEREFRESHTOKEN;
-//     } else {
-//       _state = SMODEPOLLPRESENCE;
-//     }
-//   }
-
-//   // Update laststate
-//   if (_laststate != _state) {
-//     _laststate = _state;
-//     log_d("======================================================================");
-//   }
-// }
+// Save context information to EEPROM
+void Document::saveContext(void) {
+  //TODO
+}
 
 bool Document::loadContext(void) {
   File    file    = SPIFFS.open(CONTEXT_FILE);
@@ -568,63 +452,4 @@ bool Document::loadContext(void) {
   }
 
   return success;
-}
-
-// Save context information to file in SPIFFS
-void Document::saveContext(void) {
-  const size_t        capacity = JSON_OBJECT_SIZE(3) + 5000;
-  DynamicJsonDocument contextDoc(capacity);
-  contextDoc["access_token"]  = _access_token.c_str();
-  contextDoc["refresh_token"] = _refresh_token.c_str();
-  contextDoc["id_token"]      = _id_token.c_str();
-
-  File   contextFile  = SPIFFS.open(CONTEXT_FILE, FILE_WRITE);
-  size_t bytesWritten = serializeJsonPretty(contextDoc, contextFile);
-  contextFile.close();
-  log_d("saveContext() - Success: %d", bytesWritten);
-  // log_d("%s", contextDoc.as<String>().c_str());
-}
-
-// TODO
-// Get presence information
-// user method
-void Document::pollPresence(void) {
-  log_d("pollPresence()");
-  // See: https://github.com/microsoftgraph/microsoft-graph-docs/blob/ananya/api-reference/beta/resources/presence.md
-  const size_t        capacity = JSON_OBJECT_SIZE(4) + 500;
-  DynamicJsonDocument responseDoc(capacity);
-
-  bool res = requestJsonApi(responseDoc,
-                            DeserializationOption::Filter(_presenceFilter),
-                            "https://graph.microsoft.com/v1.0/me/presence",
-                            "",
-                            "GET",
-                            true);
-
-  if (!res) {
-    //_state = SMODEPRESENCEREQUESTERROR;
-    _retries++;
-    log_e("Presence request error. retry:#%d", _retries);
-  } else if (responseDoc.containsKey("error")) {
-    const char* _error_code = responseDoc["error"]["code"];
-    if (strcmp(_error_code, "InvalidAuthenticationToken")) {
-      log_e("pollPresence() - Refresh needed");
-      _tsPolling = millis();
-      //_state     = SMODEREFRESHTOKEN;
-    } else {
-      log_e("pollPresence() - Error: %s\n", _error_code);
-      //_state = SMODEPRESENCEREQUESTERROR;
-      _retries++;
-    }
-  } else {
-    log_i("success to get Presence");
-
-    // Store presence info
-    // availability = responseDoc["availability"].as<String>();
-    // activity     = responseDoc["activity"].as<String>();
-    // _retries     = 0;
-
-    // // TODO
-    // setPresenceAnimation();
-  }
 }
