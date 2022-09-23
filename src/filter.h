@@ -43,6 +43,8 @@ constexpr char refleshtokenFilter[] = R"(
 }
 )";
 
+// TODO Please add User filter below.
+
 constexpr char presenceFilter[] = R"(
 {
   "id"           : true,
@@ -50,5 +52,3 @@ constexpr char presenceFilter[] = R"(
   "activity"     : true"
 }
 )";
-
-// TODO Please add User filter below.

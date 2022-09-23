@@ -30,7 +30,7 @@ public:
     if (success) {
       exitAction();
     } else {
-      _ticker.once(10, IntervalTimer);
+      _ticker.once(30, IntervalTimer);
     }
   }
 

@@ -20,7 +20,6 @@ public:
 
   void entryAction(void) override {
     log_d("entryAction");
-    //無し
   }
 
   void doActivity(void) override {
@@ -32,6 +31,7 @@ public:
       // TODO トークンを保存できること
       exitAction();
     } else {
+      // TODO リトライ回数を設定して回数を越えた場合の処理を考えること
       _ticker.once(10, IntervalTimer);
     }
   }

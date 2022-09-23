@@ -24,7 +24,7 @@ public:
 
   void doActivity(void) override {
     log_d("doActivity");
-    // TOFO　トークンが取れた場合SAuthReadyへ遷移すること
+    // TOFOトークンが取れた場合SAuthReadyへ遷移すること
     bool success = _doc->pollForToken();
     if (success) {
       // TODO トークンを保存する

@@ -23,11 +23,11 @@ public:
   ESP32MSGraph(WebServerClass* server) : _server(server),
                                          _portal(*_server),
                                          /*setting page*/
-                                         _loginconfig("/loginSettings", "Device Login Settings"),
+                                         _loginconfig("/loginSettings", "Device Login Settings"),  // show
                                          _header("header", "Device Login Settings"),
                                          _caption("caption", "次の項目を入力して[Get Device Code]ボタンを押してください", "", "", AC_Tag_P),
-                                         _clientID("clientID", "", "Client ID", "Client or Generic ID", "e.g. 3837bbf0-30fb-47ad-bce8-f460ba9880c3"),
-                                         _tenantID("tenantID", "", "Tenant Hostname or ID", "Tenant Hostname or ID", "e.g. contoso.onmicrosoft.com"),
+                                         _clientID("clientID", "", "            Client ID"),
+                                         _tenantID("tenantID", "", "Tenant Hostname or ID"),
                                          _getdevicecode("getdevicecode", "Get Device Code", "/getdevicecode"),
                                          /*start login page*/
                                          _devicelogin("/lauchdevicelogin", "Dvice Login", false),  // hidden
@@ -137,7 +137,8 @@ We will go to next page...
     });
 
     _portal.on("/lauchdevicelogin", [&](AutoConnectAux& aux, PageArgument& args) -> String {
-      SPollToken* state                              = (SPollToken*)_context->getState();
+      SPollToken* state = (SPollToken*)_context->getState();
+
       aux["devicecode"].as<AutoConnectInput>().value = state->getUserCode();
       return String();
     });
