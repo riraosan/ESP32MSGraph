@@ -34,11 +34,8 @@ Contributors:
 
 #ifndef DISABLECERTCHECK
 
-// Tool to get certs: https://projects.petrucci.ch/esp32/
-
 // certificate for https://login.microsoftonline.com
 // DigiCert Global Root CA, Valid until: 10/Nov/2031
-// From: https://www.digicert.com/kb/digicert-root-certificates.htm
 constexpr char rootCACertificateLogin[] = R"(
 -----BEGIN CERTIFICATE-----
 MIIDrzCCApegAwIBAgIQCDvgVpBCRrGhdWrJWZHHSjANBgkqhkiG9w0BAQUFADBh
@@ -94,7 +91,7 @@ MrY=
 #endif
 
 int Document::getTokenLifetime() {
-  return (_expires - millis()) / 1000;
+  return _expires - (millis() / 1000);
 }
 
 String Document::getDeviceCode(void) {
@@ -108,8 +105,10 @@ String Document::getUserCode(void) {
 /**
  * API request handler
  */
-bool Document::requestJsonApi(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter filter, String url, String payload, String type, bool sendAuth) {
+bool Document::requestGraphAPI(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter filter, String url, String payload, String type, bool sendAuth) {
   std::unique_ptr<WiFiClientSecure> client(new WiFiClientSecure);
+
+  bool success = false;
 
 #ifndef DISABLECERTCHECK
   if (url.indexOf("graph.microsoft.com") > -1) {
@@ -143,9 +142,6 @@ bool Document::requestJsonApi(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter f
 
     // httpCode will be negative on error
     if (httpCode > 0) {
-      // HTTP header has been send and Server response header has been handled
-      // log_i("[HTTPS] Method: %s, Response code: %d", type.c_str(), httpCode);
-
       // File found at server (HTTP 200, 301), or HTTP 400 with response payload
       if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_BAD_REQUEST) {
         // Parse JSON data
@@ -157,28 +153,28 @@ bool Document::requestJsonApi(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter f
         if (error) {
           log_e("deserializeJson() failed: %s", error.c_str());
           https.end();
-          return false;
+          success = false;
         } else {
-          // log_i("deserializeJson() Success: %s", error.c_str());
+          log_i("deserializeJson() Success!");
           https.end();
-          return true;
+          success = true;
         }
       } else {
         log_e("[HTTPS] Other HTTP code: %d", httpCode);
         https.end();
-        return false;
+        success = false;
       }
     } else {
       log_e("[HTTPS] Request failed: %s", https.errorToString(httpCode).c_str());
       https.end();
-      return false;
+      success = false;
     }
   } else {
     log_e("[HTTPS] can't begin().");
-    return false;
+    success = false;
   }
 
-  return false;
+  return success;
 }
 
 void Document::handleGetSettings() {
@@ -217,13 +213,14 @@ void Document::handleGetSettings() {
 //   "message": "To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code SZVKQXTYC to authenticate."
 // }
 bool Document::startDevicelogin() {
+  bool success = false;
   // Request device login context
   DynamicJsonDocument doc(JSON_OBJECT_SIZE(6) + 540);
 
-  bool res = requestJsonApi(doc,
-                            DeserializationOption::Filter(_loginFilter),
-                            "https://login.microsoftonline.com/" + _paramTenantValue + "/oauth2/v2.0/devicecode",
-                            "client_id=" + _paramClientIdValue + "&scope=offline_access%20openid%20Presence.Read");
+  bool res = requestGraphAPI(doc,
+                             DeserializationOption::Filter(_loginFilter),
+                             "https://login.microsoftonline.com/" + _paramTenantValue + "/oauth2/v2.0/devicecode",
+                             "client_id=" + _paramClientIdValue + "&scope=offline_access%20openid%20Presence.Read");
 
   if (res) {
     if (doc.containsKey("device_code") && doc.containsKey("user_code") && doc.containsKey("interval") && doc.containsKey("verification_uri") && doc.containsKey("message")) {
@@ -231,21 +228,22 @@ bool Document::startDevicelogin() {
       _user_code        = doc["user_code"].as<String>();
       _device_code      = doc["device_code"].as<String>();
       _verification_uri = doc["verification_uri"].as<String>();
-      _expires          = doc["expires_in"].as<unsigned int>();
+      _expires          = doc["expires_in"].as<unsigned int>() + (millis() / 1000);  // [seconds]
       _interval         = doc["interval"].as<unsigned int>();
       _message          = doc["message"].as<String>();
 
+      log_i("expires = %d[s]", _expires);
       // Send JSON response
       _server->send(200, "application/json", doc.as<String>());
-      return true;
+      success = true;
     } else {
       _server->send(500, "application/json", "{\"error\": \"devicelogin_unknown_response\"}");
-      return false;
+      success = false;
     }
   } else {
     log_e("response fail.");
   }
-  return false;
+  return success;
 }
 
 /*
@@ -271,10 +269,10 @@ bool Document::pollForToken(void) {
   log_i("payload = %s", payload.c_str());
   log_i("url     = %s", url.c_str());
 
-  bool res = requestJsonApi(responseDoc,
-                            DeserializationOption::Filter(_refleshtokenFilter),
-                            url,
-                            payload);
+  bool res = requestGraphAPI(responseDoc,
+                             DeserializationOption::Filter(_refleshtokenFilter),
+                             url,
+                             payload);
 
   if (!res) {
     log_e("response failer");
@@ -297,9 +295,11 @@ bool Document::pollForToken(void) {
       _access_token            = responseDoc["access_token"].as<String>();
       _refresh_token           = responseDoc["refresh_token"].as<String>();
       _id_token                = responseDoc["id_token"].as<String>();
-      _expires                 = _expires_in * 1000;  // ms
+      _expires                 = _expires_in + (millis() / 1000);  //[seconds]
 
-      log_i("Set : SMODEAUTHREADY");
+      log_i("pollForToken expires = %d[s]", _expires);
+
+      log_d("pollForToken() - Success");
       success = true;
     } else {
       log_e("No response: ");
@@ -320,10 +320,10 @@ bool Document::refreshToken(void) {
 
   DynamicJsonDocument responseDoc(6144);  // from ArduinoJson Assistant
 
-  bool res = requestJsonApi(responseDoc,
-                            DeserializationOption::Filter(_refleshtokenFilter),
-                            "https://login.microsoftonline.com/" + _paramTenantValue + "/oauth2/v2.0/token",
-                            payload);
+  bool res = requestGraphAPI(responseDoc,
+                             DeserializationOption::Filter(_refleshtokenFilter),
+                             "https://login.microsoftonline.com/" + _paramTenantValue + "/oauth2/v2.0/token",
+                             payload);
 
   // Replace tokens and expiration
   if (res && responseDoc.containsKey("access_token") && responseDoc.containsKey("refresh_token")) {
@@ -341,77 +341,36 @@ bool Document::refreshToken(void) {
 
     if (!responseDoc["expires_in"].isNull()) {
       int _expires_in = responseDoc["expires_in"].as<unsigned int>();
-      _expires        = millis() + (_expires_in * 1000);  // Calculate timestamp when token _expires
+      _expires        = _expires_in + (millis() / 1000);  // Calculate timestamp when token _expires
+      log_i("refreshToken expires = %d[s]", _expires);
     }
 
-    //_state = SMODEPOLLPRESENCE;
     log_d("refreshToken() - Success");
     success = true;
   } else {
     log_d("refreshToken() - Error:");
-    // Set retry after timeout
-    //_tsPolling = millis() + (DEFAULT_ERROR_RETRY_INTERVAL * 1000);
     success = false;
   }
   return success;
 }
 
-// TODO
-// Get presence information
-// user method
-void Document::pollPresence(void) {
-  log_d("pollPresence()");
-  // See: https://github.com/microsoftgraph/microsoft-graph-docs/blob/ananya/api-reference/beta/resources/presence.md
-  const size_t        capacity = JSON_OBJECT_SIZE(4) + 500;
-  DynamicJsonDocument responseDoc(capacity);
-
-  bool res = requestJsonApi(responseDoc,
-                            DeserializationOption::Filter(_presenceFilter),
-                            "https://graph.microsoft.com/v1.0/me/presence",
-                            "",
-                            "GET",
-                            true);
-
-  if (!res) {
-    _retries++;
-    log_e("Presence request error. retry:#%d", _retries);
-  } else if (responseDoc.containsKey("error")) {
-    const char* _error_code = responseDoc["error"]["code"];
-    if (strcmp(_error_code, "InvalidAuthenticationToken")) {
-      log_e("pollPresence() - Refresh needed");
-      _tsPolling = millis();
-    } else {
-      log_e("pollPresence() - Error: %s\n", _error_code);
-      _retries++;
-    }
-  } else {
-    log_i("success to get Presence");
-
-    // Store presence info
-    // availability = responseDoc["availability"].as<String>();
-    // activity     = responseDoc["activity"].as<String>();
-    // _retries     = 0;
-
-    // // TODO
-    // setPresenceAnimation();
-  }
-}
-
 // Save context information to EEPROM
 void Document::saveContext(void) {
-  //TODO
+  // TODO
 }
 
 bool Document::loadContext(void) {
-  File    file    = SPIFFS.open(CONTEXT_FILE);
-  boolean success = false;
+  File file    = SPIFFS.open(CONTEXT_FILE);
+  bool success = false;
 
   if (!file) {
     log_d("loadContext() - No file found");
+    success = false;
   } else {
     size_t size = file.size();
     if (size == 0) {
       log_d("loadContext() - File empty");
+      success = false;
     } else {
       const int            capacity = JSON_OBJECT_SIZE(3) + 10000;
       DynamicJsonDocument  contextDoc(capacity);
@@ -419,6 +378,7 @@ bool Document::loadContext(void) {
 
       if (err) {
         log_d("loadContext() - deserializeJson() failed with code: %s", err.c_str());
+        success = false;
       } else {
         int numSettings = 0;
         if (!contextDoc["access_token"].isNull()) {
@@ -434,18 +394,17 @@ bool Document::loadContext(void) {
           numSettings++;
         }
         if (numSettings == 3) {
-          success = true;
           log_d("loadContext() - Success");
           if (_paramClientIdValue.length() > 0 && _paramTenantValue.length() > 0) {
             log_d("loadContext() - Next: Refresh token.");
-            //_state = SMODEREFRESHTOKEN;
           } else {
             log_d("loadContext() - No client id or tenant setting found.");
           }
+          success = true;
         } else {
           log_e("loadContext() - ERROR Number of valid settings in file: %d, should be 3.", numSettings);
+          success = false;
         }
-        // log_d(contextDoc.as<String>());
       }
     }
     file.close();

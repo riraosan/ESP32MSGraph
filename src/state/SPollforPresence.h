@@ -23,7 +23,7 @@ public:
 
   void doActivity(void) override {
     log_d("doActivity");
-    //TODO プレゼンスを取得すること
+    // TODO プレゼンスを取得すること
     //トークン有効時間が過ぎたら、トークンリフレッシュへ遷移すること
   }
 
@@ -31,7 +31,7 @@ public:
     log_d("exitAction");
   }
 
-  void update(void) override{
+  void update(void) override {
     log_d("update");
   }
 

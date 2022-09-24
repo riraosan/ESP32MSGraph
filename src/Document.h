@@ -68,21 +68,20 @@ public:
 
   // for WebUI
   // API request handler
-  bool   requestJsonApi(JsonDocument &doc, ARDUINOJSON_NAMESPACE::Filter filter, String url, String payload = "", String type = "POST", bool sendAuth = false);
+  bool   requestGraphAPI(JsonDocument &doc, ARDUINOJSON_NAMESPACE::Filter filter, String url, String payload = "", String type = "POST", bool sendAuth = false);
   String getContentType(String filename);
   bool   exists(String path);
 
   // preference
   bool loadContext(void);
   void saveContext(void);
-  void removeContext(void);
 
   // for Azure AD login
   bool pollForToken(void);
   bool refreshToken(void);
   bool startDevicelogin(void);
-
   int    getTokenLifetime(void);
+
   String getDeviceCode(void);
   String getUserCode(void);
 
@@ -91,14 +90,15 @@ private:
 
   unsigned long _tsPolling;
 
+  //from user
   String _paramClientIdValue;
   String _paramTenantValue;
   String _paramPollIntervalValue;
 
-  String _access_token;
-  String _refresh_token;
-  String _id_token;
-
+  //from Graph API
+  String   _access_token;
+  String   _refresh_token;
+  String   _id_token;
   String   _user_code;
   String   _device_code;
   String   _verification_uri;
@@ -106,9 +106,10 @@ private:
   uint8_t  _interval;
   String   _message;
 
+  // retry count
   uint8_t _retries;
 
-  StaticJsonDocument<200> _loginFilter;         //初回ログインに使用
-  StaticJsonDocument<200> _refleshtokenFilter;  //トークン再取得に使用
-  StaticJsonDocument<200> _presenceFilter;      //在籍情報取得時に使用
+  StaticJsonDocument<200> _loginFilter;
+  StaticJsonDocument<200> _refleshtokenFilter;
+  StaticJsonDocument<200> _presenceFilter;
 };

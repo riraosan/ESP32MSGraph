@@ -11,7 +11,6 @@
 #include <AutoConnect.h>
 #include <StateBase.h>
 #include "./state/SDeviceLoginStarted.h"
-#include "./state/SInitialize.h"
 #include "./state/SPollToken.h"
 using WebServerClass = WebServer;
 #else
@@ -28,18 +27,19 @@ public:
                                          _caption("caption", "次の項目を入力して[Get Device Code]ボタンを押してください", "", "", AC_Tag_P),
                                          _clientID("clientID", "", "            Client ID"),
                                          _tenantID("tenantID", "", "Tenant Hostname or ID"),
-                                         _getdevicecode("getdevicecode", "Get Device Code", "/getdevicecode"),
+                                         _getusercode("getusercode", "Get Device Code", "/getusercode"),
                                          /*start login page*/
                                          _devicelogin("/lauchdevicelogin", "Dvice Login", false),  // hidden
-                                         _header2("header2", "Device Login"),
-                                         _caption2("caption2", "Device Codeをクリップボードにコピーして[Start device login]ボタンを押してください", "", "", AC_Tag_P),
-                                         _devicecode("devicecode", "", "Device Code"),
+                                         _header2("header2", "User Login"),
+                                         _caption2("caption2", "User Codeをクリップボードにコピーして[Start device login]ボタンを押してください", "", "", AC_Tag_P),
+                                         _usercode("usercode", "", "User Code"),
                                          _startlogin("startlogin", "Start device login", "https://microsoft.com/devicelogin"),
                                          _isDetect(false),
                                          _isConnect(false),
                                          _hostName(F("graph")),
                                          _apName(F("ATOM-G-AP")),
                                          _httpPort(80) {
+    // TODO to be good page...
     _content = R"(
 <!DOCTYPE html>
 <html>
@@ -92,11 +92,11 @@ We will go to next page...
   }
 
   void createAuxPage(void) {
-    // login settings
-    _loginconfig.add({_header, _caption, _clientID, _tenantID, _getdevicecode});
+    // ClinentID, Tenant ID
+    _loginconfig.add({_header, _caption, _clientID, _tenantID, _getusercode});
 
-    // show device code
-    _devicelogin.add({_header2, _caption2, _devicecode, _startlogin});
+    // User Code
+    _devicelogin.add({_header2, _caption2, _usercode, _startlogin});
 
     _portal.join({_loginconfig, _devicelogin});
   }
@@ -107,13 +107,14 @@ We will go to next page...
 
     createAuxPage();
 
-    // Responder of root page and apply page handled directly from WebServer class.
+    // main page
     _server->on("/", [&]() {
       _content.replace("__AC_LINK__", String(AUTOCONNECT_LINK(COG_16)));
       _server->send(200, "text/html", _content);
     });
 
-    _server->on("/getdevicecode", [&]() {
+    // start to get UserCode and DeviceCode
+    _server->on("/getusercode", [&]() {
       _loginconfig.fetchElement();
 
       _clientIdValue = _loginconfig["clientID"].value;
@@ -129,7 +130,7 @@ We will go to next page...
       _server->send(200, "text/html", _pleasewait);  //次の画面へ遷移
     });
 
-    // memo これがないと落ちる。
+    // input ClinentID and TenantID or Tenant URI
     _portal.on("/loginSettings", [&](AutoConnectAux& aux, PageArgument& args) -> String {
       aux["clientID"].as<AutoConnectInput>().value = "ex)3837bbf0-30fb-47ad-bce8-f460ba9880c3";
       aux["tenantID"].as<AutoConnectInput>().value = "ex)contoso.onmicrosoft.com";
@@ -139,17 +140,18 @@ We will go to next page...
     _portal.on("/lauchdevicelogin", [&](AutoConnectAux& aux, PageArgument& args) -> String {
       SPollToken* state = (SPollToken*)_context->getState();
 
-      aux["devicecode"].as<AutoConnectInput>().value = state->getUserCode();
+      aux["usercode"].as<AutoConnectInput>().value = state->getUserCode();
       return String();
     });
 
+    //autoconnect configurations
     _config.autoReconnect     = true;
     _config.reconnectInterval = 1;
-
-    _config.ota  = AC_OTA_BUILTIN;
-    _config.apid = _apName;
+    _config.ota               = AC_OTA_BUILTIN;
+    _config.apid              = _apName;
     _portal.config(_config);
 
+    //event handler
     _portal.onDetect([&](IPAddress& ip) -> bool {
       log_d("onDetect");
       setDetect(true);
@@ -167,6 +169,7 @@ We will go to next page...
 
     bool result = false;
 
+    //start connecting
     if (String(SSID).isEmpty() || String(PASSWORD).isEmpty()) {
       result = _portal.begin();
     } else {
@@ -210,12 +213,12 @@ private:
   AutoConnectText   _caption;
   AutoConnectInput  _clientID;
   AutoConnectInput  _tenantID;
-  AutoConnectSubmit _getdevicecode;
+  AutoConnectSubmit _getusercode;
 
   AutoConnectAux    _devicelogin;
   AutoConnectText   _header2;
   AutoConnectText   _caption2;
-  AutoConnectInput  _devicecode;
+  AutoConnectInput  _usercode;
   AutoConnectSubmit _startlogin;
 
   bool _isDetect;
