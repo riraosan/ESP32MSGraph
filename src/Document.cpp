@@ -360,55 +360,55 @@ void Document::saveContext(void) {
 }
 
 bool Document::loadContext(void) {
-  File file    = SPIFFS.open(CONTEXT_FILE);
-  bool success = false;
+  // File file    = SPIFFS.open(CONTEXT_FILE);
+  // bool success = false;
 
-  if (!file) {
-    log_d("loadContext() - No file found");
-    success = false;
-  } else {
-    size_t size = file.size();
-    if (size == 0) {
-      log_d("loadContext() - File empty");
-      success = false;
-    } else {
-      const int            capacity = JSON_OBJECT_SIZE(3) + 10000;
-      DynamicJsonDocument  contextDoc(capacity);
-      DeserializationError err = deserializeJson(contextDoc, file);
+  // if (!file) {
+  //   log_d("loadContext() - No file found");
+  //   success = false;
+  // } else {
+  //   size_t size = file.size();
+  //   if (size == 0) {
+  //     log_d("loadContext() - File empty");
+  //     success = false;
+  //   } else {
+  //     const int            capacity = JSON_OBJECT_SIZE(3) + 10000;
+  //     DynamicJsonDocument  contextDoc(capacity);
+  //     DeserializationError err = deserializeJson(contextDoc, file);
 
-      if (err) {
-        log_d("loadContext() - deserializeJson() failed with code: %s", err.c_str());
-        success = false;
-      } else {
-        int numSettings = 0;
-        if (!contextDoc["access_token"].isNull()) {
-          _access_token = contextDoc["access_token"].as<String>();
-          numSettings++;
-        }
-        if (!contextDoc["refresh_token"].isNull()) {
-          _refresh_token = contextDoc["refresh_token"].as<String>();
-          numSettings++;
-        }
-        if (!contextDoc["id_token"].isNull()) {
-          _id_token = contextDoc["id_token"].as<String>();
-          numSettings++;
-        }
-        if (numSettings == 3) {
-          log_d("loadContext() - Success");
-          if (_paramClientIdValue.length() > 0 && _paramTenantValue.length() > 0) {
-            log_d("loadContext() - Next: Refresh token.");
-          } else {
-            log_d("loadContext() - No client id or tenant setting found.");
-          }
-          success = true;
-        } else {
-          log_e("loadContext() - ERROR Number of valid settings in file: %d, should be 3.", numSettings);
-          success = false;
-        }
-      }
-    }
-    file.close();
-  }
+  //     if (err) {
+  //       log_d("loadContext() - deserializeJson() failed with code: %s", err.c_str());
+  //       success = false;
+  //     } else {
+  //       int numSettings = 0;
+  //       if (!contextDoc["access_token"].isNull()) {
+  //         _access_token = contextDoc["access_token"].as<String>();
+  //         numSettings++;
+  //       }
+  //       if (!contextDoc["refresh_token"].isNull()) {
+  //         _refresh_token = contextDoc["refresh_token"].as<String>();
+  //         numSettings++;
+  //       }
+  //       if (!contextDoc["id_token"].isNull()) {
+  //         _id_token = contextDoc["id_token"].as<String>();
+  //         numSettings++;
+  //       }
+  //       if (numSettings == 3) {
+  //         log_d("loadContext() - Success");
+  //         if (_paramClientIdValue.length() > 0 && _paramTenantValue.length() > 0) {
+  //           log_d("loadContext() - Next: Refresh token.");
+  //         } else {
+  //           log_d("loadContext() - No client id or tenant setting found.");
+  //         }
+  //         success = true;
+  //       } else {
+  //         log_e("loadContext() - ERROR Number of valid settings in file: %d, should be 3.", numSettings);
+  //         success = false;
+  //       }
+  //     }
+  //   }
+  //   file.close();
+  // }
 
-  return success;
+  // return success;
 }

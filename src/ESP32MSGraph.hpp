@@ -144,14 +144,14 @@ We will go to next page...
       return String();
     });
 
-    //autoconnect configurations
+    // autoconnect configurations
     _config.autoReconnect     = true;
     _config.reconnectInterval = 1;
     _config.ota               = AC_OTA_BUILTIN;
     _config.apid              = _apName;
     _portal.config(_config);
 
-    //event handler
+    // event handler
     _portal.onDetect([&](IPAddress& ip) -> bool {
       log_d("onDetect");
       setDetect(true);
@@ -169,7 +169,7 @@ We will go to next page...
 
     bool result = false;
 
-    //start connecting
+    // start connecting
     if (String(SSID).isEmpty() || String(PASSWORD).isEmpty()) {
       result = _portal.begin();
     } else {

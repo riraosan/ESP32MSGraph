@@ -80,7 +80,7 @@ public:
   bool pollForToken(void);
   bool refreshToken(void);
   bool startDevicelogin(void);
-  int    getTokenLifetime(void);
+  int  getTokenLifetime(void);
 
   String getDeviceCode(void);
   String getUserCode(void);
@@ -90,12 +90,12 @@ private:
 
   unsigned long _tsPolling;
 
-  //from user
+  // from user
   String _paramClientIdValue;
   String _paramTenantValue;
   String _paramPollIntervalValue;
 
-  //from Graph API
+  // from Graph API
   String   _access_token;
   String   _refresh_token;
   String   _id_token;
