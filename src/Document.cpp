@@ -186,41 +186,37 @@ void Document::handleGetSettings() {
   // responseDoc["client_id"].set(_paramClientIdValue);
   // responseDoc["tenant"].set(_paramTenantValue);
   // responseDoc["poll_interval"].set(_paramPollIntervalValue);
-  // responseDoc["num_leds"].set(_paramNumLedsValue);
-
-  // responseDoc["heap"].set(ESP.getFreeHeap());
-  // responseDoc["min_heap"].set(ESP.getMinFreeHeap());
-  // responseDoc["sketch_size"].set(ESP.getSketchSize());
-  // responseDoc["free_sketch_space"].set(ESP.getFreeSketchSpace());
-  // responseDoc["flash_chip_size"].set(ESP.getFlashChipSize());
-  // responseDoc["flash_chip_speed"].set(ESP.getFlashChipSpeed());
-  // responseDoc["sdk_version"].set(ESP.getSdkVersion());
-  // responseDoc["cpu_freq"].set(ESP.getCpuFreqMHz());
-
-  // responseDoc["sketch_version"].set(VERSION);
 
   // serializeJsonPretty(responseDoc, Serial);
 
   // _server->send(200, "application/json", responseDoc.as<String>());
 }
 
-// {
-//   "user_code": "SZVKQXTYC",
-//   "device_code": "xxx",
-//   "verification_uri": "https://microsoft.com/devicelogin",
-//   "expires_in": 900,
-//   "interval": 5,
-//   "message": "To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code SZVKQXTYC to authenticate."
-// }
+/*
+{
+  "user_code": "SZVKQXTYC",
+  "device_code": "xxx",
+  "verification_uri": "https://microsoft.com/devicelogin",
+  "expires_in": 900,
+  "interval": 5,
+  "message": "To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code SZVKQXTYC to authenticate."
+}
+*/
 bool Document::startDevicelogin() {
   bool success = false;
   // Request device login context
   DynamicJsonDocument doc(JSON_OBJECT_SIZE(6) + 540);
 
+  String URI     = "https://login.microsoftonline.com/{tenand_id}/oauth2/v2.0/devicecode";
+  String payload = "client_id={client_id}&scope=offline_access%20openid%20Presence.Read";
+
+  URI.replace("{tenand_id}", _paramTenantValue);
+  payload.replace("{client_id}", _paramClientIdValue);
+
   bool res = requestGraphAPI(doc,
                              DeserializationOption::Filter(_loginFilter),
-                             "https://login.microsoftonline.com/" + _paramTenantValue + "/oauth2/v2.0/devicecode",
-                             "client_id=" + _paramClientIdValue + "&scope=offline_access%20openid%20Presence.Read");
+                             URI,
+                             payload);
 
   if (res) {
     if (doc.containsKey("device_code") && doc.containsKey("user_code") && doc.containsKey("interval") && doc.containsKey("verification_uri") && doc.containsKey("message")) {
@@ -243,6 +239,7 @@ bool Document::startDevicelogin() {
   } else {
     log_e("response fail.");
   }
+
   return success;
 }
 
@@ -257,21 +254,24 @@ bool Document::startDevicelogin() {
   "id_token": ""
 }
 */
-
 // Poll for access token
 bool Document::pollForToken(void) {
   bool   success = false;
-  String payload("client_id=" + String(_paramClientIdValue) + "&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=" + _device_code);
-  String url("https://login.microsoftonline.com/" + String(_paramTenantValue) + "/oauth2/v2.0/token");
+  String URI("https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token");
+  String payload("client_id={client_id}&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code={device_code}");
 
   DynamicJsonDocument responseDoc(JSON_OBJECT_SIZE(7) + 5000);
 
+  URI.replace("{tenant_id}", _paramTenantValue);
+  payload.replace("{client_id}", _paramClientIdValue);
+  payload.replace("{device_code}", _device_code);
+
   log_i("payload = %s", payload.c_str());
-  log_i("url     = %s", url.c_str());
+  log_i("url     = %s", URI.c_str());
 
   bool res = requestGraphAPI(responseDoc,
                              DeserializationOption::Filter(_refleshtokenFilter),
-                             url,
+                             URI,
                              payload);
 
   if (!res) {
@@ -306,6 +306,7 @@ bool Document::pollForToken(void) {
       success = false;
     }
   }
+
   return false;
 }
 
@@ -316,13 +317,18 @@ bool Document::refreshToken(void) {
   bool success = false;
 
   // See: https://docs.microsoft.com/de-de/azure/active-directory/develop/v1-protocols-oauth-code#refreshing-the-access-tokens
-  String payload = "client_id=" + _paramClientIdValue + "&grant_type=refresh_token&refresh_token=" + _refresh_token;
+  String payload("client_id={client_id}&grant_type=refresh_token&refresh_token={refresh_token}");
+  String URI("https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token");
+
+  URI.replace("{tenant_id}", _paramTenantValue);
+  payload.replace("{client_id}", _paramClientIdValue);
+  payload.replace("{refresh_token}", _refresh_token);
 
   DynamicJsonDocument responseDoc(6144);  // from ArduinoJson Assistant
 
   bool res = requestGraphAPI(responseDoc,
                              DeserializationOption::Filter(_refleshtokenFilter),
-                             "https://login.microsoftonline.com/" + _paramTenantValue + "/oauth2/v2.0/token",
+                             URI,
                              payload);
 
   // Replace tokens and expiration
@@ -351,6 +357,7 @@ bool Document::refreshToken(void) {
     log_d("refreshToken() - Error:");
     success = false;
   }
+
   return success;
 }
 
@@ -360,55 +367,5 @@ void Document::saveContext(void) {
 }
 
 bool Document::loadContext(void) {
-  // File file    = SPIFFS.open(CONTEXT_FILE);
-  // bool success = false;
-
-  // if (!file) {
-  //   log_d("loadContext() - No file found");
-  //   success = false;
-  // } else {
-  //   size_t size = file.size();
-  //   if (size == 0) {
-  //     log_d("loadContext() - File empty");
-  //     success = false;
-  //   } else {
-  //     const int            capacity = JSON_OBJECT_SIZE(3) + 10000;
-  //     DynamicJsonDocument  contextDoc(capacity);
-  //     DeserializationError err = deserializeJson(contextDoc, file);
-
-  //     if (err) {
-  //       log_d("loadContext() - deserializeJson() failed with code: %s", err.c_str());
-  //       success = false;
-  //     } else {
-  //       int numSettings = 0;
-  //       if (!contextDoc["access_token"].isNull()) {
-  //         _access_token = contextDoc["access_token"].as<String>();
-  //         numSettings++;
-  //       }
-  //       if (!contextDoc["refresh_token"].isNull()) {
-  //         _refresh_token = contextDoc["refresh_token"].as<String>();
-  //         numSettings++;
-  //       }
-  //       if (!contextDoc["id_token"].isNull()) {
-  //         _id_token = contextDoc["id_token"].as<String>();
-  //         numSettings++;
-  //       }
-  //       if (numSettings == 3) {
-  //         log_d("loadContext() - Success");
-  //         if (_paramClientIdValue.length() > 0 && _paramTenantValue.length() > 0) {
-  //           log_d("loadContext() - Next: Refresh token.");
-  //         } else {
-  //           log_d("loadContext() - No client id or tenant setting found.");
-  //         }
-  //         success = true;
-  //       } else {
-  //         log_e("loadContext() - ERROR Number of valid settings in file: %d, should be 3.", numSettings);
-  //         success = false;
-  //       }
-  //     }
-  //   }
-  //   file.close();
-  // }
-
-  // return success;
+  // TODO
 }

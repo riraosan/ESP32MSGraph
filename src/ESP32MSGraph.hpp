@@ -39,7 +39,7 @@ public:
                                          _hostName(F("graph")),
                                          _apName(F("ATOM-G-AP")),
                                          _httpPort(80) {
-    // TODO to be good page...
+    // TODO to be better page...
     _content = R"(
 <!DOCTYPE html>
 <html>
