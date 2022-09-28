@@ -27,14 +27,17 @@ void SPollToken::doActivity(void) {
   log_d("doActivity");
   bool success = _doc->pollForToken();
   if (success) {
+    //timerを解放できること
+    _ticker.detach();
     // TODO トークンが保存できること
     exitAction();
   } else {
     _retries++;
     if (_retries > 3) {
       this->_context->TransitionTo(new SDeviceLoginStarted(std::move(_doc)));
+    } else {
+      _ticker.once(60, IntervalTimer);
     }
-    _ticker.once(30, IntervalTimer);
   }
 }
 
@@ -45,9 +48,9 @@ void SPollToken::exitAction(void) {
 
 void SPollToken::update(void) {
   if (_timer) {
+    _timer = false;
     entryAction();
     doActivity();
-    _timer = false;
   }
 }
 

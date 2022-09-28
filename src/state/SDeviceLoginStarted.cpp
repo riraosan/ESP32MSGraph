@@ -27,6 +27,7 @@ void SDeviceLoginStarted::doActivity(void) {
   log_d("doActivity");
   bool success = _doc->startDevicelogin();  // detecting device-code event
   if (success) {
+    _ticker.detach();
     exitAction();
   } else {
     _retries++;
@@ -35,7 +36,7 @@ void SDeviceLoginStarted::doActivity(void) {
       ESP.restart();
     }
 
-    _ticker.once(15, IntervalTimer);
+    _ticker.once(30, IntervalTimer);
   }
 }
 
@@ -46,8 +47,8 @@ void SDeviceLoginStarted::exitAction(void) {
 
 void SDeviceLoginStarted::update(void) {
   if (_timer) {
+    _timer = false;
     entryAction();
     doActivity();
-    _timer = false;
   }
 }

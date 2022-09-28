@@ -295,7 +295,7 @@ bool Document::pollForToken(void) {
       _access_token            = responseDoc["access_token"].as<String>();
       _refresh_token           = responseDoc["refresh_token"].as<String>();
       _id_token                = responseDoc["id_token"].as<String>();
-      _expires                 = _expires_in + (millis() / 1000);  //[seconds]
+      _expires                 = _expires_in;  //[seconds]
 
       log_i("pollForToken expires = %d[s]", _expires);
 
@@ -307,7 +307,7 @@ bool Document::pollForToken(void) {
     }
   }
 
-  return false;
+  return success;
 }
 
 // Refresh the access token
@@ -347,7 +347,7 @@ bool Document::refreshToken(void) {
 
     if (!responseDoc["expires_in"].isNull()) {
       int _expires_in = responseDoc["expires_in"].as<unsigned int>();
-      _expires        = _expires_in + (millis() / 1000);  // Calculate timestamp when token _expires
+      _expires        = _expires_in;  // Calculate timestamp when token _expires
       log_i("refreshToken expires = %d[s]", _expires);
     }
 
@@ -368,4 +368,5 @@ void Document::saveContext(void) {
 
 bool Document::loadContext(void) {
   // TODO
+  return true;
 }
