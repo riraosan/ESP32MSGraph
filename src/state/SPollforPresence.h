@@ -14,7 +14,8 @@
 // for Presence API
 class SPollforPresence : public State {
 public:
-  SPollforPresence(std::shared_ptr<Document> doc) : _doc(doc) {
+  SPollforPresence(std::shared_ptr<Document> doc) : _doc(doc),
+                                                    _retry(0) {
   }
 
   void entryAction(void) override {
@@ -35,6 +36,9 @@ public:
     log_d("update");
   }
 
+
+
 private:
   std::shared_ptr<Document> _doc;
+  uint8_t                   _retry;
 };

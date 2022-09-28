@@ -102,6 +102,10 @@ String Document::getUserCode(void) {
   return _user_code;
 }
 
+bool Document::getAuthReady(void) {
+  return _authReady;
+}
+
 /**
  * API request handler
  */
@@ -307,6 +311,8 @@ bool Document::pollForToken(void) {
     }
   }
 
+  _authReady = success;
+
   return success;
 }
 
@@ -357,6 +363,8 @@ bool Document::refreshToken(void) {
     log_d("refreshToken() - Error:");
     success = false;
   }
+
+  _authReady = success;
 
   return success;
 }

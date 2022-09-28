@@ -42,7 +42,7 @@ void SDeviceLoginStarted::doActivity(void) {
 
 void SDeviceLoginStarted::exitAction(void) {
   log_d("exitAction");
-  this->_context->TransitionTo(new SPollToken(std::move(_doc)));
+  this->_context->TransitionTo(new SPollToken(_doc));
 }
 
 void SDeviceLoginStarted::update(void) {

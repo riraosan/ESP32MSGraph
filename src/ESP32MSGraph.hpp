@@ -125,7 +125,7 @@ We will go to next page...
       _doc->setClientIdValue(_clientIdValue);
 
       log_d("Starting state transitions");
-      _context->TransitionTo(new SDeviceLoginStarted(std::move(_doc)));
+      _context->TransitionTo(new SDeviceLoginStarted(_doc));
 
       _server->send(200, "text/html", _pleasewait);  //次の画面へ遷移
     });
@@ -191,11 +191,17 @@ We will go to next page...
     }
   }
 
+  bool requestGraphAPI(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter filter, String url, String payload, String type, bool sendAuth) {
+    return _doc->requestGraphAPI(doc, filter, url, payload, type, sendAuth);
+  }
+
+  bool getAuthReady(void) {
+    return _doc->getAuthReady();
+  }
+
   void update(void) {
     _portal.handleClient();
-
     _context->update();
-
     delay(1);
   }
 

@@ -40,10 +40,10 @@ public:
                                      _tsPolling(0),
                                      _expires(0),
                                      _interval(5),
-                                     _retries(0) {
+                                     _retries(0),
+                                     _authReady(false) {
     deserializeJson(_loginFilter, loginFilter);
     deserializeJson(_refleshtokenFilter, refleshtokenFilter);
-    deserializeJson(_presenceFilter, presenceFilter);
   }
 
   ~Document(void) {
@@ -85,6 +85,8 @@ public:
   String getDeviceCode(void);
   String getUserCode(void);
 
+  bool getAuthReady(void);
+
 private:
   WebServerClass *_server;
 
@@ -109,7 +111,8 @@ private:
   // retry count
   uint8_t _retries;
 
+  bool _authReady;
+
   StaticJsonDocument<200> _loginFilter;
   StaticJsonDocument<200> _refleshtokenFilter;
-  StaticJsonDocument<200> _presenceFilter;
 };

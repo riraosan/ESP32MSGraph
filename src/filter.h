@@ -47,8 +47,8 @@ constexpr char refleshtokenFilter[] = R"(
 
 constexpr char presenceFilter[] = R"(
 {
-  "id"           : true,
+  "id"           : false,
   "availability" : true,
-  "activity"     : true"
+  "activity"     : false"
 }
 )";
