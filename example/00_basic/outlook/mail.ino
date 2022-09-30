@@ -44,8 +44,9 @@ constexpr char mailFilter[] = R"(
 
 StaticJsonDocument<200> _mailFilter;
 
-// from Addressから受信したメールを取得する
-String emailAPI(R"(https://graph.microsoft.com/v1.0/me/messages?$filter=(from/emailAddress/address) eq '{from mail Address}'&$count=true)");
+// from Addressから受信したメールの件数を取得する
+// String emailAPI(R"(https://graph.microsoft.com/v1.0/me/messages?$count=true)");
+String emailAPI(R"(https://graph.microsoft.com/v1.0/me/messages?$filter=((from/emailAddress/address)%20eq%20'{from mail Address}')&$count=true)");
 
 bool pollMail(String api) {
   // See:
