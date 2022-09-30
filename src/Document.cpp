@@ -181,31 +181,6 @@ bool Document::requestGraphAPI(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter 
   return success;
 }
 
-void Document::handleGetSettings() {
-  // log_d("handleGetSettings()");
-
-  // const int capacity = JSON_OBJECT_SIZE(13);
-
-  // StaticJsonDocument<capacity> responseDoc;
-  // responseDoc["client_id"].set(_paramClientIdValue);
-  // responseDoc["tenant"].set(_paramTenantValue);
-  // responseDoc["poll_interval"].set(_paramPollIntervalValue);
-
-  // serializeJsonPretty(responseDoc, Serial);
-
-  // _server->send(200, "application/json", responseDoc.as<String>());
-}
-
-/*
-{
-  "user_code": "SZVKQXTYC",
-  "device_code": "xxx",
-  "verification_uri": "https://microsoft.com/devicelogin",
-  "expires_in": 900,
-  "interval": 5,
-  "message": "To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code SZVKQXTYC to authenticate."
-}
-*/
 bool Document::startDevicelogin() {
   bool success = false;
   // Request device login context
@@ -247,17 +222,6 @@ bool Document::startDevicelogin() {
   return success;
 }
 
-/*
-{
-  "token_type": "Bearer",
-  "scope": "openid Presence.Read profile email",
-  "expires_in": 4870,
-  "ext_expires_in": 4870,
-  "access_token": "",
-  "refresh_token": "",
-  "id_token": ""
-}
-*/
 // Poll for access token
 bool Document::pollForToken(void) {
   bool   success = false;

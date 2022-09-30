@@ -28,6 +28,7 @@ void SAuthReady::doActivity(void) {
   bool success = _doc->refreshToken();
   if (success) {
     // TODO トークンを保存できること
+    _doc->saveContext();
     _ticker.detach();
     _ticker.once(60 * 50, tokenRefreshTimer);
   } else {

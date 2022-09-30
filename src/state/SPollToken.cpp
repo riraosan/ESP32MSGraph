@@ -21,6 +21,8 @@ void SPollToken::IntervalTimer(void) {
 
 void SPollToken::entryAction(void) {
   log_d("entryAction");
+  //９０日以内に取得したリフレッシュトークンがあるならば。
+  //SAuthReadyへ遷移すること
 }
 
 void SPollToken::doActivity(void) {
@@ -29,7 +31,6 @@ void SPollToken::doActivity(void) {
   if (success) {
     // timerを解放できること
     _ticker.detach();
-    // TODO トークンが保存できること
     exitAction();
   } else {
     _retries++;
