@@ -212,7 +212,7 @@ bool Document::startDevicelogin() {
   DynamicJsonDocument doc(JSON_OBJECT_SIZE(6) + 540);
 
   String URI     = "https://login.microsoftonline.com/{tenand_id}/oauth2/v2.0/devicecode";
-  String payload = "client_id={client_id}&scope=offline_access%20openid%20Presence.Read";
+  String payload = "client_id={client_id}&scope=offline_access%20openid%20email%20profile%20Presence.Read%20Mail.Read%20Mail.ReadBasic%20Mail.ReadWrite";
 
   URI.replace("{tenand_id}", _paramTenantValue);
   payload.replace("{client_id}", _paramClientIdValue);

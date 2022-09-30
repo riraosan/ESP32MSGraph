@@ -42,13 +42,3 @@ constexpr char refleshtokenFilter[] = R"(
   "id_token"       : true
 }
 )";
-
-// TODO Please add User filter below.
-
-constexpr char presenceFilter[] = R"(
-{
-  "id"           : false,
-  "availability" : true,
-  "activity"     : false"
-}
-)";

@@ -32,34 +32,42 @@ void _interval(void) {
 WebServerClass server;
 ESP32MSGraph   msgraph(&server);
 
-StaticJsonDocument<200> _presenceFilter;
+// メールの件数を取得します。
+constexpr char mailFilter[] = R"(
+{
+  "@odata.context"  : false,
+  "@odata.count"    : true,
+  "@odata.nextLink" : false,
+  "value"           : false
+}
+)";
 
-String _availability;
+StaticJsonDocument<200> _mailFilter;
 
-bool pollPresence(void) {
-  log_d("pollPresence()");
-  // See: https://github.com/microsoftgraph/microsoft-graph-docs/blob/ananya/api-reference/beta/resources/presence.md
+// from Addressから受信したメールを取得する
+String emailAPI(R"(https://graph.microsoft.com/v1.0/me/messages?$filter=(from/emailAddress/address) eq '{from mail Address}'&$count=true)");
+
+bool pollMail(String api) {
+  // See:
   const size_t        capacity = JSON_OBJECT_SIZE(4) + 500;
   DynamicJsonDocument responseDoc(capacity);
 
   bool res = msgraph.requestGraphAPI(responseDoc,
-                                     DeserializationOption::Filter(_presenceFilter),
-                                     "https://graph.microsoft.com/v1.0/me/presence",
+                                     DeserializationOption::Filter(_mailFilter),
+                                     api,
                                      "",
                                      "GET",
                                      true);
 
   if (res) {
-    // Store presence info
-    _availability = responseDoc["availability"].as<String>();
-    // String activity     = responseDoc["activity"].as<String>();
-    log_i("success to get Presence: %s", _availability.c_str());
+    int count = responseDoc["@odata.count"].as<int>();
+    log_i("success to get mail counts: %d", count);
   } else if (responseDoc.containsKey("error")) {
     const char* _error_code = responseDoc["error"]["code"];
     if (strcmp(_error_code, "InvalidAuthenticationToken")) {
-      log_e("pollPresence() - Refresh needed");
+      log_e("Refresh needed");
     } else {
-      log_e("pollPresence() - Error: %s\n", _error_code);
+      log_e("Error: %s", _error_code);
     }
   } else {
     log_e("unknown");
@@ -74,8 +82,10 @@ void setup() {
   pinMode(0, OUTPUT);
   digitalWrite(0, LOW);
 
-  deserializeJson(_presenceFilter, presenceFilter);
+  deserializeJson(_mailFilter, mailFilter);
   _timer.attach(30, _interval);
+
+  emailAPI.replace("{from mail Address}", "your@email.addr");
 
   msgraph.begin();
 }
@@ -83,7 +93,7 @@ void setup() {
 void loop() {
   if (flag && msgraph.getAuthReady()) {
     flag = false;
-    pollPresence();
+    pollMail(emailAPI);
   }
   msgraph.update();
 }
