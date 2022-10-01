@@ -181,38 +181,13 @@ bool Document::requestGraphAPI(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter 
   return success;
 }
 
-void Document::handleGetSettings() {
-  // log_d("handleGetSettings()");
-
-  // const int capacity = JSON_OBJECT_SIZE(13);
-
-  // StaticJsonDocument<capacity> responseDoc;
-  // responseDoc["client_id"].set(_paramClientIdValue);
-  // responseDoc["tenant"].set(_paramTenantValue);
-  // responseDoc["poll_interval"].set(_paramPollIntervalValue);
-
-  // serializeJsonPretty(responseDoc, Serial);
-
-  // _server->send(200, "application/json", responseDoc.as<String>());
-}
-
-/*
-{
-  "user_code": "SZVKQXTYC",
-  "device_code": "xxx",
-  "verification_uri": "https://microsoft.com/devicelogin",
-  "expires_in": 900,
-  "interval": 5,
-  "message": "To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code SZVKQXTYC to authenticate."
-}
-*/
 bool Document::startDevicelogin() {
   bool success = false;
   // Request device login context
   DynamicJsonDocument doc(JSON_OBJECT_SIZE(6) + 540);
 
   String URI     = "https://login.microsoftonline.com/{tenand_id}/oauth2/v2.0/devicecode";
-  String payload = "client_id={client_id}&scope=offline_access%20openid%20Presence.Read";
+  String payload = "client_id={client_id}&scope=offline_access%20openid%20email%20profile%20Presence.Read%20Mail.Read%20Mail.ReadBasic%20Mail.ReadWrite";
 
   URI.replace("{tenand_id}", _paramTenantValue);
   payload.replace("{client_id}", _paramClientIdValue);
@@ -247,17 +222,6 @@ bool Document::startDevicelogin() {
   return success;
 }
 
-/*
-{
-  "token_type": "Bearer",
-  "scope": "openid Presence.Read profile email",
-  "expires_in": 4870,
-  "ext_expires_in": 4870,
-  "access_token": "",
-  "refresh_token": "",
-  "id_token": ""
-}
-*/
 // Poll for access token
 bool Document::pollForToken(void) {
   bool   success = false;
@@ -369,11 +333,12 @@ bool Document::refreshToken(void) {
   return success;
 }
 
-// Save context information to EEPROM
+// Save Refresh tolken, Clinet ID, Tenant ID to EEPROM.
 void Document::saveContext(void) {
   // TODO
 }
 
+// Load Refresh tolken, Clinet ID, Tenant ID from EEPROM.
 bool Document::loadContext(void) {
   // TODO
   return true;

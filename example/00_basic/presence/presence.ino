@@ -32,13 +32,22 @@ void _interval(void) {
 WebServerClass server;
 ESP32MSGraph   msgraph(&server);
 
+// Please add User filter.
+constexpr char presenceFilter[] = R"(
+{
+  "id"           : false,
+  "availability" : true,
+  "activity"     : false"
+}
+)";
+
 StaticJsonDocument<200> _presenceFilter;
 
 String _availability;
 
 bool pollPresence(void) {
   log_d("pollPresence()");
-  // See: https://github.com/microsoftgraph/microsoft-graph-docs/blob/ananya/api-reference/beta/resources/presence.md
+
   const size_t        capacity = JSON_OBJECT_SIZE(4) + 500;
   DynamicJsonDocument responseDoc(capacity);
 
