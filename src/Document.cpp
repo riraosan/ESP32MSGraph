@@ -333,11 +333,12 @@ bool Document::refreshToken(void) {
   return success;
 }
 
-// Save context information to EEPROM
+// Save Refresh tolken, Clinet ID, Tenant ID to EEPROM.
 void Document::saveContext(void) {
   // TODO
 }
 
+// Load Refresh tolken, Clinet ID, Tenant ID from EEPROM.
 bool Document::loadContext(void) {
   // TODO
   return true;
