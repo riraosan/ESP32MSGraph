@@ -263,7 +263,7 @@ bool Document::pollForToken(void) {
       _access_token            = responseDoc["access_token"].as<String>();
       _refresh_token           = responseDoc["refresh_token"].as<String>();
       _id_token                = responseDoc["id_token"].as<String>();
-      _expires                 = _expires_in;  //[seconds]
+      _expires                 = _expires_in + (millis() / 1000);  // [seconds]
 
       log_i("pollForToken expires = %d[s]", _expires);
 
@@ -317,14 +317,14 @@ bool Document::refreshToken(void) {
 
     if (!responseDoc["expires_in"].isNull()) {
       int _expires_in = responseDoc["expires_in"].as<unsigned int>();
-      _expires        = _expires_in;  // Calculate timestamp when token _expires
+      _expires        = _expires_in + (millis() / 1000);  // Calculate timestamp when token _expires
       log_i("refreshToken expires = %d[s]", _expires);
     }
 
-    log_d("refreshToken() - Success");
+    log_d("Success");
     success = true;
   } else {
-    log_d("refreshToken() - Error:");
+    log_d("Error:");
     success = false;
   }
 
@@ -335,11 +335,49 @@ bool Document::refreshToken(void) {
 
 // Save Refresh tolken, Clinet ID, Tenant ID to EEPROM.
 void Document::saveContext(void) {
-  // TODO
+  EEPROM.begin(2048);
+  EepromStream eepromStream(0, 2048);
+  _preference.clear();
+
+  _preference["client_id"]     = _paramClientIdValue;
+  _preference["tenant_id"]     = _paramTenantValue;
+  _preference["refresh_token"] = _refresh_token;
+  log_i("save refresh token");
+
+  log_i("here %s", _refresh_token.c_str());
+
+  serializeJson(_preference, eepromStream);
+
+  serializeJsonPretty(_preference, Serial);
+  Serial.println();
+
+  eepromStream.flush();
+  EEPROM.end();
 }
 
 // Load Refresh tolken, Clinet ID, Tenant ID from EEPROM.
 bool Document::loadContext(void) {
-  // TODO
-  return true;
+  EEPROM.begin(2048);
+  EepromStream eepromStream(0, 2048);
+  _preference.clear();
+
+  DeserializationError error = deserializeJson(_preference, eepromStream);
+
+  serializeJsonPretty(_preference, Serial);
+  Serial.println();
+
+  bool success = true;
+  if (error) {
+    log_e("deserializeJson() failed: %s", error.c_str());
+    success = false;
+  } else {
+    _paramClientIdValue = _preference["client_id"].as<String>();
+    _paramTenantValue   = _preference["tenant_id"].as<String>();
+    _refresh_token      = _preference["refresh_token"].as<String>();
+    log_i("load refresh token %s %s", _paramClientIdValue.c_str(), _paramTenantValue.c_str());
+    // log_i("%s", _refresh_token.c_str());
+  }
+
+  EEPROM.end();
+  return success;
 }

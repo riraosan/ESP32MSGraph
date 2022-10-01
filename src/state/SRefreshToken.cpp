@@ -5,27 +5,27 @@
 #include <Document.h>
 #include <ArduinoJson.h>
 #include <Ticker.h>
-#include "SPollToken.h"
+#include "SRefreshToken.h"
 #include "SAuthReady.h"
 #include "SDeviceLoginStarted.h"
 
-bool SPollToken::_timer = true;
+bool SRefreshToken::_timer = true;
 
-SPollToken::SPollToken(std::shared_ptr<Document> doc) : _doc(doc),
+SRefreshToken::SRefreshToken(std::shared_ptr<Document> doc) : _doc(doc),
                                                         _retries(0) {
 }
 
-void SPollToken::IntervalTimer(void) {
+void SRefreshToken::IntervalTimer(void) {
   _timer = true;
 }
 
-void SPollToken::entryAction(void) {
+void SRefreshToken::entryAction(void) {
   log_d("entryAction");
 }
 
-void SPollToken::doActivity(void) {
+void SRefreshToken::doActivity(void) {
   log_d("doActivity");
-  bool success = _doc->pollForToken();
+  bool success = _doc->refreshToken();
   if (success) {
     _doc->saveContext();
     _ticker.detach();
@@ -40,23 +40,15 @@ void SPollToken::doActivity(void) {
   }
 }
 
-void SPollToken::exitAction(void) {
+void SRefreshToken::exitAction(void) {
   log_d("exitAction");
   this->_context->TransitionTo(new SAuthReady(_doc));
 }
 
-void SPollToken::update(void) {
+void SRefreshToken::update(void) {
   if (_timer) {
     _timer = false;
     entryAction();
     doActivity();
   }
-}
-
-String SPollToken::getDeviceCode(void) {
-  return _doc->getDeviceCode();
-}
-
-String SPollToken::getUserCode(void) {
-  return _doc->getUserCode();
 }

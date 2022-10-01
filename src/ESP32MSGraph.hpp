@@ -12,6 +12,7 @@
 #include <StateBase.h>
 #include "./state/SDeviceLoginStarted.h"
 #include "./state/SPollToken.h"
+#include "./state/SRefreshToken.h"
 using WebServerClass = WebServer;
 #else
 #error Only for ESP32
@@ -132,8 +133,8 @@ We will go to next page...
 
     // input ClinentID and TenantID or Tenant URI
     _portal.on("/loginSettings", [&](AutoConnectAux& aux, PageArgument& args) -> String {
-      aux["clientID"].as<AutoConnectInput>().value = "ex)3837bbf0-30fb-47ad-bce8-f460ba9880c3";
-      aux["tenantID"].as<AutoConnectInput>().value = "ex)contoso.onmicrosoft.com";
+      aux["clientID"].as<AutoConnectInput>().value = _doc->getClientIdValue();
+      aux["tenantID"].as<AutoConnectInput>().value = _doc->getTenantValue();
       return String();
     });
 
@@ -185,6 +186,13 @@ We will go to next page...
       } else {
         log_e("Error setting up MDNS responder");
       }
+
+      _doc->loadContext();
+      if (!_doc->getRefreshToken().isEmpty()) {
+        log_i("refresh token exist. Transition to SRefreshToken.");
+        _context->TransitionTo(new SRefreshToken(_doc));
+      }
+
     } else {
       log_e("ESP32 can't connect to AP.");
       ESP.restart();
@@ -203,6 +211,11 @@ We will go to next page...
     _portal.handleClient();
     _context->update();
     delay(1);
+  }
+
+  void deleteRefreshToken(void) {
+    _doc->deleteRefreshToken();
+    _doc->saveContext();
   }
 
 protected:

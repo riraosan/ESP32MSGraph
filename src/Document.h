@@ -33,11 +33,15 @@ Contributors:
 #include <WebServer.h>
 using WebServerClass = WebServer;
 
+#include <StreamUtils.h>
+
 class Document {
 public:
   // Document(void) {}
   Document(WebServerClass *server) : _server(server),
-                                     _tsPolling(0),
+                                     _paramClientIdValue(""),
+                                     _paramTenantValue(""),
+                                     _refresh_token(""),
                                      _expires(0),
                                      _interval(5),
                                      _retries(0),
@@ -49,21 +53,28 @@ public:
   ~Document(void) {
   }
 
-  // user method
-  void pollPresence(void);
-  void handleRoot(void);
-  void handleGetSettings(void);
-  void handleClearSettings(void);
-  void handleFileDelete(void);
-  void handleFileList(void);
-  bool handleFileRead(String path);
-
   void setClientIdValue(String clientid) {
     _paramClientIdValue = clientid;
   }
 
+  String getClientIdValue(void) {
+    return _paramClientIdValue;
+  }
+
   void setTenantValue(String tenant) {
     _paramTenantValue = tenant;
+  }
+
+  String getTenantValue(void) {
+    return _paramTenantValue;
+  }
+
+  String getRefreshToken(void) {
+    return _refresh_token;
+  }
+
+  void deleteRefreshToken(void) {
+    _refresh_token.clear();
   }
 
   // for WebUI
@@ -90,12 +101,9 @@ public:
 private:
   WebServerClass *_server;
 
-  unsigned long _tsPolling;
-
   // from user
   String _paramClientIdValue;
   String _paramTenantValue;
-  String _paramPollIntervalValue;
 
   // from Graph API
   String   _access_token;
@@ -115,4 +123,6 @@ private:
 
   StaticJsonDocument<200> _loginFilter;
   StaticJsonDocument<200> _refleshtokenFilter;
+
+  StaticJsonDocument<2048> _preference;
 };

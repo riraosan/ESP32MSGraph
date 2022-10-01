@@ -16,17 +16,18 @@ M5Stack ATOM Lite / MATRIX and M5Stack series
 
 ## How to use
 
+0. Make Client ID with Permission in Azure AD.
 1. Turn on the ESP32 power supply.
 2. Connect to ATOM-G-AP with PC.
 3. Connect ESP32 to any WiFi access point (AutoConnect).
 4. Display the AutoConnect Home page of ESP32 from PC.
-5. Select Device Login Settings from the top menu.
+5. Select "Device Login Settings" from the top menu.
 6. Enter Client ID and Tenant ID, then click the button.
 7. Copy the user code on the next screen and Input the user code on the AzuruAD login Page.
 
 ## Library's
 
-//TODO
+I have confirmed this library works with arduino-esp32 ver 2.0.3.
 
 ```yaml
 [arduino-esp32]

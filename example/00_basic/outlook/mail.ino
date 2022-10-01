@@ -21,6 +21,8 @@ Contributors:
 #include <ESP32MSGraph.h>
 using WebServerClass = WebServer;
 #include <Ticker.h>
+#include <Button2.h>
+#include <M5StickCPlus.h>
 
 Ticker _timer;
 bool   flag = false;
@@ -32,6 +34,7 @@ void _interval(void) {
 WebServerClass server;
 ESP32MSGraph   msgraph(&server);
 
+Button2 button;
 // メールの件数を取得します。
 constexpr char mailFilter[] = R"(
 {
@@ -44,7 +47,7 @@ constexpr char mailFilter[] = R"(
 
 StaticJsonDocument<200> _mailFilter;
 
-// from Addressから受信したメールの件数を取得する
+// from Addressから受信したメールを取得する
 // String emailAPI(R"(https://graph.microsoft.com/v1.0/me/messages?$count=true)");
 String emailAPI(R"(https://graph.microsoft.com/v1.0/me/messages?$filter=((from/emailAddress/address)%20eq%20'{from mail Address}')&$count=true)");
 
@@ -77,16 +80,61 @@ bool pollMail(String api) {
   return res;
 }
 
+void handler(Button2& btn) {
+  switch (btn.getType()) {
+    case clickType::single_click:
+      Serial.print("single ");
+      break;
+    case clickType::double_click:
+      Serial.print("double ");
+      break;
+    case clickType::triple_click:
+      Serial.print("triple ");
+      break;
+    case clickType::long_click:
+      Serial.print("long ");
+      msgraph.deleteRefreshToken();
+      ESP.restart();
+      break;
+    case clickType::empty:
+      break;
+    default:
+      break;
+  }
+
+  Serial.print("click");
+  Serial.print(" (");
+  Serial.print(btn.getNumberOfClicks());
+  Serial.println(")");
+}
+
+void initM5(void) {
+  M5.begin();             // Initialize M5StickC Plus.  初始化 M5StickC PLus
+  M5.Lcd.setTextSize(3);  // Set font size.  设置字体大小
+  M5.Lcd.setRotation(3);  // Rotate the screen. 将屏幕旋转
+  // LCD display.  Lcd显示
+  M5.Lcd.print("Hello World");
+}
+
 void setup() {
+  initM5();
+
   Serial.begin(115200);
   // ATOM Lite WiFi不具合対策
   pinMode(0, OUTPUT);
   digitalWrite(0, LOW);
 
+  // button
+  button.setClickHandler(handler);
+  button.setDoubleClickHandler(handler);
+  button.setTripleClickHandler(handler);
+  button.setLongClickHandler(handler);
+  button.begin(37);  // G37
+
   deserializeJson(_mailFilter, mailFilter);
   _timer.attach(30, _interval);
 
-  emailAPI.replace("{from mail Address}", "your@email.addr");
+  emailAPI.replace("{from mail Address}", "confluence@valtes-group.atlassian.net");
 
   msgraph.begin();
 }
@@ -97,4 +145,5 @@ void loop() {
     pollMail(emailAPI);
   }
   msgraph.update();
+  button.loop();
 }
