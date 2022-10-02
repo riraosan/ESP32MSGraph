@@ -134,7 +134,7 @@ void setup() {
   deserializeJson(_mailFilter, mailFilter);
   _timer.attach(30, _interval);
 
-  emailAPI.replace("{from mail Address}", "confluence@valtes-group.atlassian.net");
+  emailAPI.replace("{from mail Address}", "your@email.com");
 
   msgraph.begin();
 }
