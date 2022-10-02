@@ -22,7 +22,8 @@ Contributors:
 using WebServerClass = WebServer;
 #include <Ticker.h>
 #include <Button2.h>
-//#include <M5StickCPlus.h>
+#include <M5GFX.h>
+#include <ESP32_8BIT_CVBS.h>
 
 Ticker _timer;
 bool   flag = false;
@@ -34,6 +35,14 @@ void _interval(void) {
 WebServerClass server;
 ESP32MSGraph   msgraph(&server);
 
+ESP32_8BIT_CVBS display;
+
+String count;
+String subject;
+String receivedDateTime("2022-10-02T00:00:00Z");
+
+String pre;
+
 Button2 button;
 // メールの件数を取得します。
 constexpr char mailFilter[] = R"(
@@ -41,19 +50,19 @@ constexpr char mailFilter[] = R"(
   "@odata.context"  : false,
   "@odata.count"    : true,
   "@odata.nextLink" : false,
-  "value"           : false
+  "value"           : true
 }
 )";
 
 StaticJsonDocument<200> _mailFilter;
 
 // from Addressから受信したメールを取得する
-// String emailAPI(R"(https://graph.microsoft.com/v1.0/me/messages?$count=true)");
-String emailAPI(R"(https://graph.microsoft.com/v1.0/me/messages?$filter=((from/emailAddress/address)%20eq%20'{from mail Address}')&$count=true)");
+// 重要： URL中のスペースは「%20」か「+」で埋めること
+String emailAPI(R"(https://graph.microsoft.com/v1.0/me/messages?$filter=startswith(subject,'Graph')&$select=subject,receivedDateTime&$top=1&$orderby=subject+desc)");
 
 bool pollMail(String api) {
   // See:
-  const size_t        capacity = JSON_OBJECT_SIZE(4) + 500;
+  const size_t        capacity = JSON_OBJECT_SIZE(4) + 512;
   DynamicJsonDocument responseDoc(capacity);
 
   bool res = msgraph.requestGraphAPI(responseDoc,
@@ -64,8 +73,11 @@ bool pollMail(String api) {
                                      true);
 
   if (res) {
-    int count = responseDoc["@odata.count"].as<int>();
-    log_i("success to get mail counts: %d", count);
+    // count            = responseDoc["@odata.count"].as<String>();
+    receivedDateTime = responseDoc["value"][0]["receivedDateTime"].as<String>();
+    subject          = responseDoc["value"][0]["subject"].as<String>();
+
+    log_i("success to get mail counts: %s", count.c_str());
   } else if (responseDoc.containsKey("error")) {
     const char* _error_code = responseDoc["error"]["code"];
     if (strcmp(_error_code, "InvalidAuthenticationToken")) {
@@ -108,42 +120,84 @@ void handler(Button2& btn) {
   Serial.println(")");
 }
 
-void initM5(void) {
-  M5.begin();             // Initialize M5StickC Plus.  初始化 M5StickC PLus
-  M5.Lcd.setTextSize(3);  // Set font size.  设置字体大小
-  M5.Lcd.setRotation(3);  // Rotate the screen. 将屏幕旋转
-  // LCD display.  Lcd显示
-  M5.Lcd.print("Hello World");
+void setupDisplay(void) {
+  display.setColorDepth(8);
+  display.setRotation(0);
+  display.begin();
+  display.startWrite();
+
+  display.setFont(&fonts::lgfxJapanMincho_16);
+  display.setTextSize(1);
+  display.setCursor(10, 10);
+  display.setTextColor(TFT_WHITE);
 }
 
 void setup() {
-  //initM5();
-
   Serial.begin(115200);
   // ATOM Lite WiFi不具合対策
   pinMode(0, OUTPUT);
   digitalWrite(0, LOW);
 
+  setupDisplay();
+
   // button
-  //button.setClickHandler(handler);
-  //button.setDoubleClickHandler(handler);
-  //button.setTripleClickHandler(handler);
+  button.setClickHandler(handler);
+  button.setDoubleClickHandler(handler);
+  button.setTripleClickHandler(handler);
   button.setLongClickHandler(handler);
   button.begin(37);  // G37
 
   deserializeJson(_mailFilter, mailFilter);
-  _timer.attach(30, _interval);
+  _timer.attach(60, _interval);
 
-  emailAPI.replace("{from mail Address}", "your@email.com");
+  display.setCursor(10, 10);
+  display.println("Connecting...");
 
   msgraph.begin();
+
+  display.fillScreen(TFT_BLACK);
+  display.setCursor(10, 10);
+  display.println("Microsoft Graph API TEST.");
+}
+
+bool checkDeploy(void) {
+  bool result;
+
+  if (receivedDateTime != pre) {
+    result = true;
+  } else {
+    result = false;
+  }
+
+  pre = receivedDateTime;
+  return result;
+}
+
+void displayText(void) {
+  display.setCursor(10, 10);
+  display.println("Microsoft Graph API TEST.");
+  display.println(" " + count);
+  display.println(" " + receivedDateTime);
+  display.println(" " + subject);
+  display.display();
 }
 
 void loop() {
   if (flag && msgraph.getAuthReady()) {
     flag = false;
     pollMail(emailAPI);
+
+    if (checkDeploy()) {
+      display.fillScreen(TFT_GREEN);
+      display.setTextColor(TFT_BLACK);
+      displayText();
+    } else {
+      display.fillScreen(TFT_BLACK);
+      display.setTextColor(TFT_WHITE);
+      displayText();
+    }
   }
+
   msgraph.update();
   button.loop();
 }
