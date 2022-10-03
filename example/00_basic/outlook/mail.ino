@@ -117,7 +117,7 @@ void initM5(void) {
 }
 
 void setup() {
-  //initM5();
+  // initM5();
 
   Serial.begin(115200);
   // ATOM Lite WiFi不具合対策
@@ -125,9 +125,9 @@ void setup() {
   digitalWrite(0, LOW);
 
   // button
-  //button.setClickHandler(handler);
-  //button.setDoubleClickHandler(handler);
-  //button.setTripleClickHandler(handler);
+  // button.setClickHandler(handler);
+  // button.setDoubleClickHandler(handler);
+  // button.setTripleClickHandler(handler);
   button.setLongClickHandler(handler);
   button.begin(37);  // G37
 
