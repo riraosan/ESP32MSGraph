@@ -39,30 +39,34 @@ ESP32_8BIT_CVBS display;
 
 String count;
 String subject;
-String receivedDateTime("2022-10-02T00:00:00Z");
-
-String pre;
+String receivedDateTime;
+String pre("2022-10-01T00:00:00Z");
 
 Button2 button;
-// メールの件数を取得します。
+// Filter by number of emails, receivedDateTime , and subject.
 constexpr char mailFilter[] = R"(
 {
   "@odata.context"  : false,
   "@odata.count"    : true,
   "@odata.nextLink" : false,
-  "value"           : true
+  "value"           : [
+    {
+     "receivedDateTime" : true,
+     "subject"          : true
+    }
+  ]
 }
 )";
 
 StaticJsonDocument<200> _mailFilter;
 
-// from Addressから受信したメールを取得する
-// 重要： URL中のスペースは「%20」か「+」で埋めること
-String emailAPI(R"(https://graph.microsoft.com/v1.0/me/messages?$filter=startswith(subject,'Graph')&$select=subject,receivedDateTime&$top=1&$orderby=subject+desc)");
+// Display only 10 e-mails whose subject begins with "Graph" and which are after the specified time. The order of display is ascending.
+// Important: Fill in the spaces in the URL with "%20" or "+".
+String baseAPI(R"(https://graph.microsoft.com/v1.0/me/messages?$filter=startswith(subject,'Graph')+and+receivedDateTime+gt+{receivedDateTime}&$top=10&$count=true&$select=subject,receivedDateTime)");
+String emailAPI(baseAPI);
 
 bool pollMail(String api) {
-  // See:
-  const size_t        capacity = JSON_OBJECT_SIZE(4) + 512;
+  const size_t        capacity(JSON_OBJECT_SIZE(4) + 2048);
   DynamicJsonDocument responseDoc(capacity);
 
   bool res = msgraph.requestGraphAPI(responseDoc,
@@ -73,7 +77,7 @@ bool pollMail(String api) {
                                      true);
 
   if (res) {
-    // count            = responseDoc["@odata.count"].as<String>();
+    count            = responseDoc["@odata.count"].as<String>();
     receivedDateTime = responseDoc["value"][0]["receivedDateTime"].as<String>();
     subject          = responseDoc["value"][0]["subject"].as<String>();
 
@@ -184,7 +188,9 @@ void displayText(void) {
 
 void loop() {
   if (flag && msgraph.getAuthReady()) {
-    flag = false;
+    flag     = false;
+    emailAPI = baseAPI;
+    emailAPI.replace("{receivedDateTime}", pre);
     pollMail(emailAPI);
 
     if (checkDeploy()) {
