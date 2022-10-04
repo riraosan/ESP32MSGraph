@@ -54,17 +54,17 @@ constexpr char mailFilter[] = R"(
     {
      "receivedDateTime" : true,
      "subject"          : true,
-     "bodyPreview"      : true
+     "bodyPreview"      : true,
     }
   ]
 }
 )";
 
-StaticJsonDocument<200> _mailFilter;
+StaticJsonDocument<512> _mailFilter;  // the purpose of saving RAM.
 
 // Display only 10 e-mails whose subject begins with "Graph" and which are after the specified time. The order of display is ascending.
 // Important: Fill in the spaces in the URL with "%20" or "+".
-String baseAPI(R"(https://graph.microsoft.com/v1.0/me/messages?$filter=startswith(subject,'Graph')+and+receivedDateTime+gt+{receivedDateTime}&$top=10&$count=true&$select=subject,receivedDateTime)");
+String baseAPI(R"(https://graph.microsoft.com/v1.0/me/messages?$filter=startswith(subject,'Graph')+and+receivedDateTime+gt+{receivedDateTime}&$top=10&$count=true&$select=subject,receivedDateTime,bodyPreview)");
 String emailAPI(baseAPI);
 
 bool pollMail(String api) {
