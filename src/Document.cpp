@@ -344,7 +344,7 @@ void Document::saveContext(void) {
   _preference["refresh_token"] = _refresh_token;
   log_i("save refresh token");
 
-  log_i("here %s", _refresh_token.c_str());
+  //log_i("here %s", _refresh_token.c_str());
 
   serializeJson(_preference, eepromStream);
 

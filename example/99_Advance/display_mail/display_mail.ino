@@ -40,6 +40,7 @@ ESP32_8BIT_CVBS display;
 String count;
 String subject;
 String receivedDateTime;
+String bodyPreview;
 String pre("2022-10-01T00:00:00Z");
 
 Button2 button;
@@ -52,7 +53,8 @@ constexpr char mailFilter[] = R"(
   "value"           : [
     {
      "receivedDateTime" : true,
-     "subject"          : true
+     "subject"          : true,
+     "bodyPreview"      : true
     }
   ]
 }
@@ -80,6 +82,7 @@ bool pollMail(String api) {
     count            = responseDoc["@odata.count"].as<String>();
     receivedDateTime = responseDoc["value"][0]["receivedDateTime"].as<String>();
     subject          = responseDoc["value"][0]["subject"].as<String>();
+    bodyPreview      = responseDoc["value"][0]["bodyPreview"].as<String>();
 
     log_i("success to get mail counts: %s", count.c_str());
   } else if (responseDoc.containsKey("error")) {
@@ -183,6 +186,7 @@ void displayText(void) {
   display.println(" " + count);
   display.println(" " + receivedDateTime);
   display.println(" " + subject);
+  display.println(" " + bodyPreview);
   display.display();
 }
 
