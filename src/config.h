@@ -18,5 +18,5 @@ Contributors:
 
 #pragma once
 
-#define DEFAULT_ERROR_RETRY_INTERVAL 30  // Default interval to try again after errors
-#define TOKEN_REFRESH_TIMEOUT        60  // Number of seconds until expiration before token gets refreshed
+#define DEFAULT_ERROR_RETRY_INTERVAL 30  // [s] Default interval to try again after errors
+#define TOKEN_REFRESH_TIMEOUT        50  // [m] Number of minuites until expiration before token gets refreshed

@@ -7,6 +7,7 @@
 #include <Ticker.h>
 #include "SDeviceLoginStarted.h"
 #include "SPollToken.h"
+#include "../config.h"
 
 bool SDeviceLoginStarted::_timer = true;
 
@@ -36,7 +37,7 @@ void SDeviceLoginStarted::doActivity(void) {
       ESP.restart();
     }
 
-    _ticker.once(30, IntervalTimer);
+    _ticker.once(DEFAULT_ERROR_RETRY_INTERVAL, IntervalTimer);
   }
 }
 

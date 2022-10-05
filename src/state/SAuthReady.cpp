@@ -5,13 +5,14 @@
 #include <Document.h>
 #include <ArduinoJson.h>
 #include "SAuthReady.h"
+#include "../config.h"
 
 bool SAuthReady::_timer = false;
 
 SAuthReady::SAuthReady(std::shared_ptr<Document> doc) : _doc(doc),
                                                         _retries(0) {
-  //トークン有効時間内に発火するタイマーを設定
-  _ticker.once(60 * 50, tokenRefreshTimer);
+  // Set timer to start within token validity time
+  _ticker.once(60 * TOKEN_REFRESH_TIMEOUT, tokenRefreshTimer);
 }
 
 void SAuthReady::tokenRefreshTimer(void) {
@@ -27,18 +28,16 @@ void SAuthReady::doActivity(void) {
 
   bool success = _doc->refreshToken();
   if (success) {
-    // TODO トークンを保存できること
     _doc->saveContext();
     _ticker.detach();
-    _ticker.once(60 * 50, tokenRefreshTimer);
+    _ticker.once(60 * TOKEN_REFRESH_TIMEOUT, tokenRefreshTimer);
   } else {
     _retries++;
     if (_retries > 5) {
       ESP.restart();
-      // TODO 再認証の際に保存したデバイスIDで再び認証できること
     }
     _ticker.detach();
-    _ticker.once(30, tokenRefreshTimer);
+    _ticker.once(DEFAULT_ERROR_RETRY_INTERVAL, tokenRefreshTimer);
   }
 }
 
