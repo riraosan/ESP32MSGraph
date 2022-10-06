@@ -3,6 +3,7 @@
 
 #if defined(ARDUINO_ARCH_ESP32)
 #include <memory>
+#include <list>
 #include <functional>
 #include <Arduino.h>
 #include <WiFi.h>
@@ -13,12 +14,13 @@
 #include "./state/SDeviceLoginStarted.h"
 #include "./state/SPollToken.h"
 #include "./state/SRefreshToken.h"
+#include "ObserverBase.h"
 using WebServerClass = WebServer;
 #else
 #error Only for ESP32
 #endif
 
-class ESP32MSGraph {
+class ESP32MSGraph : public IPublisher {
 public:
   ESP32MSGraph(WebServerClass* server) : _server(server),
                                          _portal(*_server),
@@ -74,6 +76,25 @@ We will go to next page...
 
   void begin(void) {
     begin("", "");
+  }
+
+  /**
+   * The subscription management methods.
+   */
+  void Attach(ISubscriver* subscriver) override {
+    _list_subscriver.push_back(subscriver);
+  }
+
+  void Detach(ISubscriver* subscriver) override {
+    _list_subscriver.remove(subscriver);
+  }
+
+  void Notify() override {
+    std::list<ISubscriver*>::iterator iterator = _list_subscriver.begin();
+    while (iterator != list__list_subscriverobserver_.end()) {
+      (*iterator)->Update(message_);//ステート名を入れる。
+      ++iterator;
+    }
   }
 
   bool getDetect(void) {
@@ -251,4 +272,6 @@ private:
 
   String _clientIdValue;
   String _tenantValue;
+
+  std::list<ISubscriver*> _list_subscriver;
 };

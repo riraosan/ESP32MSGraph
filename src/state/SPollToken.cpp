@@ -8,6 +8,7 @@
 #include "SPollToken.h"
 #include "SAuthReady.h"
 #include "SDeviceLoginStarted.h"
+#include "../config.h"
 
 bool SPollToken::_timer = true;
 
@@ -35,7 +36,7 @@ void SPollToken::doActivity(void) {
     if (_retries > 3) {
       this->_context->TransitionTo(new SDeviceLoginStarted(_doc));
     } else {
-      _ticker.once(60, IntervalTimer);
+      _ticker.once(DEFAULT_ERROR_RETRY_INTERVAL, IntervalTimer);
     }
   }
 }

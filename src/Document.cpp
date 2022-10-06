@@ -151,9 +151,10 @@ bool Document::requestGraphAPI(JsonDocument& doc, ARDUINOJSON_NAMESPACE::Filter 
         // Parse JSON data
         DeserializationError error = deserializeJson(doc, https.getStream(), filter);
 
+#if defined(DEBUG)
         serializeJsonPretty(doc, Serial);
         Serial.println();
-
+#endif
         if (error) {
           log_e("deserializeJson() failed: %s", error.c_str());
           https.end();
@@ -344,12 +345,12 @@ void Document::saveContext(void) {
   _preference["refresh_token"] = _refresh_token;
   log_i("save refresh token");
 
-  //log_i("here %s", _refresh_token.c_str());
-
   serializeJson(_preference, eepromStream);
 
+#if defined(DEBUG)
   serializeJsonPretty(_preference, Serial);
   Serial.println();
+#endif
 
   eepromStream.flush();
   EEPROM.end();
@@ -363,8 +364,10 @@ bool Document::loadContext(void) {
 
   DeserializationError error = deserializeJson(_preference, eepromStream);
 
+#if defined(DEBUG)
   serializeJsonPretty(_preference, Serial);
   Serial.println();
+#endif
 
   bool success = true;
   if (error) {

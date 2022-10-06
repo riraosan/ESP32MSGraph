@@ -8,11 +8,12 @@
 #include "SRefreshToken.h"
 #include "SAuthReady.h"
 #include "SDeviceLoginStarted.h"
+#include "../config.h"
 
 bool SRefreshToken::_timer = true;
 
 SRefreshToken::SRefreshToken(std::shared_ptr<Document> doc) : _doc(doc),
-                                                        _retries(0) {
+                                                              _retries(0) {
 }
 
 void SRefreshToken::IntervalTimer(void) {
@@ -35,7 +36,7 @@ void SRefreshToken::doActivity(void) {
     if (_retries > 3) {
       this->_context->TransitionTo(new SDeviceLoginStarted(_doc));
     } else {
-      _ticker.once(60, IntervalTimer);
+      _ticker.once(DEFAULT_ERROR_RETRY_INTERVAL, IntervalTimer);
     }
   }
 }
