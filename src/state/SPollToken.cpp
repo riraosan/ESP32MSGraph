@@ -8,7 +8,7 @@
 #include "SPollToken.h"
 #include "SAuthReady.h"
 #include "SDeviceLoginStarted.h"
-#include "../config.h"
+#include "config.h"
 
 bool SPollToken::_timer = true;
 

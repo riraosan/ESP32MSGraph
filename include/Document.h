@@ -19,7 +19,6 @@ Contributors:
 #pragma once
 
 #include <Arduino.h>
-#include "ObserverBase.h"
 #include "config.h"
 #include "filter.h"
 
