@@ -7,7 +7,7 @@
 #include <Ticker.h>
 #include "SDeviceLoginStarted.h"
 #include "SPollToken.h"
-#include "../config.h"
+#include "config.h"
 
 bool SDeviceLoginStarted::_timer = true;
 

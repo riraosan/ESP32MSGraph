@@ -8,7 +8,7 @@
 #include "SRefreshToken.h"
 #include "SAuthReady.h"
 #include "SDeviceLoginStarted.h"
-#include "../config.h"
+#include "config.h"
 
 bool SRefreshToken::_timer = true;
 

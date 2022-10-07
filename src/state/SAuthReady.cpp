@@ -5,7 +5,7 @@
 #include <Document.h>
 #include <ArduinoJson.h>
 #include "SAuthReady.h"
-#include "../config.h"
+#include "config.h"
 
 bool SAuthReady::_timer = false;
 

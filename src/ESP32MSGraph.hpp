@@ -3,6 +3,7 @@
 
 #if defined(ARDUINO_ARCH_ESP32)
 #include <memory>
+#include <list>
 #include <functional>
 #include <Arduino.h>
 #include <WiFi.h>

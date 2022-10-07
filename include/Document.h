@@ -19,8 +19,8 @@ Contributors:
 #pragma once
 
 #include <Arduino.h>
-#include <config.h>
-#include <filter.h>
+#include "config.h"
+#include "filter.h"
 
 // basic
 #include <WiFiClientSecure.h>
@@ -35,7 +35,7 @@ using WebServerClass = WebServer;
 
 #include <StreamUtils.h>
 
-class Document {
+class Document  {
 public:
   // Document(void) {}
   Document(WebServerClass *server) : _server(server),
