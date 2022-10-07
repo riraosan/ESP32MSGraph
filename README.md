@@ -12,7 +12,7 @@ M5Stack ATOM Lite / MATRIX and M5Stack series
 
 ## How to build
 
-//TODO
+//TBD 
 
 ## How to use
 
