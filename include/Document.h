@@ -35,7 +35,7 @@ using WebServerClass = WebServer;
 
 #include <StreamUtils.h>
 
-class Document  {
+class Document {
 public:
   // Document(void) {}
   Document(WebServerClass *server) : _server(server),
@@ -77,6 +77,10 @@ public:
     _refresh_token.clear();
   }
 
+  void setScope(String scope) {
+    _scope = scope;
+  }
+
   // for WebUI
   // API request handler
   bool   requestGraphAPI(JsonDocument &doc, ARDUINOJSON_NAMESPACE::Filter filter, String url, String payload = "", String type = "POST", bool sendAuth = false);
@@ -104,6 +108,7 @@ private:
   // from user
   String _paramClientIdValue;
   String _paramTenantValue;
+  String _scope;
 
   // from Graph API
   String   _access_token;
