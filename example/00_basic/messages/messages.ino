@@ -136,6 +136,7 @@ void setup() {
 
   emailAPI.replace("{from mail Address}", "your@email.com");
 
+  msgraph.setScope("offline_access%20openid%20email%20profile%20Presence.Read%20Mail.Read%20Mail.ReadBasic%20Mail.ReadWrite");
   msgraph.begin();
 }
 
