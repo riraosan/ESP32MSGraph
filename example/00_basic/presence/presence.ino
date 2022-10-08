@@ -19,16 +19,16 @@ Contributors:
 #include <Arduino.h>
 #include <WebServer.h>
 #include <ESP32MSGraph.h>
-using WebServerClass = WebServer;
 #include <Ticker.h>
 #include <WS2812FX.h>
+#include <Button2.h>
+using WebServerClass = WebServer;
 
 WebServerClass server;
 ESP32MSGraph   msgraph(&server);
 
 WS2812FX     ws2812fx(25, 27, NEO_GRB + NEO_KHZ800);
 TaskHandle_t TaskNeopixel;
-String       _availability;
 
 Ticker _timer;
 bool   flag = false;
@@ -43,6 +43,8 @@ constexpr char presenceFilter[] = R"(
 )";
 
 StaticJsonDocument<200> _presenceFilter;
+
+Button2 button;
 
 void _interval(void) {
   flag = true;
@@ -106,7 +108,6 @@ bool pollPresence(void) {
 
   if (res) {
     // Store presence info
-    //_availability = responseDoc["availability"].as<String>();
     String activity = responseDoc["activity"].as<String>();
     setPresenceAnimation(activity);
     log_i("success to get Presence: %s", activity.c_str());
@@ -131,6 +132,34 @@ void neopixelTask(void* parameter) {
   }
 }
 
+void handler(Button2& btn) {
+  switch (btn.getType()) {
+    case clickType::single_click:
+      Serial.print("single ");
+      break;
+    case clickType::double_click:
+      Serial.print("double ");
+      break;
+    case clickType::triple_click:
+      Serial.print("triple ");
+      break;
+    case clickType::long_click:
+      Serial.print("long ");
+      msgraph.deleteRefreshToken();
+      ESP.restart();
+      break;
+    case clickType::empty:
+      break;
+    default:
+      break;
+  }
+
+  Serial.print("click");
+  Serial.print(" (");
+  Serial.print(btn.getNumberOfClicks());
+  Serial.println(")");
+}
+
 void setup() {
   Serial.begin(115200);
 
@@ -151,6 +180,14 @@ void setup() {
   // Pin neopixel logic to core 0
   xTaskCreatePinnedToCore(neopixelTask, "Neopixels", 1024, NULL, 1, &TaskNeopixel, 1);
 
+  // button
+  button.setClickHandler(handler);
+  button.setDoubleClickHandler(handler);
+  button.setTripleClickHandler(handler);
+  button.setLongClickHandler(handler);
+  button.begin(39);  // G39
+
+  msgraph.setScope("offline_access%20openid%20email%20profile%20Presence.Read");
   msgraph.begin();
 }
 
@@ -160,5 +197,6 @@ void loop() {
     pollPresence();
   }
 
+  button.loop();
   msgraph.update();
 }

@@ -39,7 +39,7 @@ public:
                                          _isDetect(false),
                                          _isConnect(false),
                                          _hostName(F("graph")),
-                                         _apName(F("ATOM-G-AP")),
+                                         _apName(F("GRAPH-G-AP")),
                                          _httpPort(80) {
     // TODO to be better page...
     _content = R"(
@@ -75,6 +75,10 @@ We will go to next page...
 
   void begin(void) {
     begin("", "");
+  }
+
+  void setScope(String scope) {
+    _scope = scope;
   }
 
   bool getDetect(void) {
@@ -125,6 +129,7 @@ We will go to next page...
       log_d("%s, %s", _clientIdValue.c_str(), _tenantValue.c_str());
       _doc->setTenantValue(_tenantValue);
       _doc->setClientIdValue(_clientIdValue);
+      _doc->setScope(_scope);
 
       log_d("Starting state transitions");
       _context->TransitionTo(new SDeviceLoginStarted(_doc));
@@ -252,4 +257,5 @@ private:
 
   String _clientIdValue;
   String _tenantValue;
+  String _scope;
 };
