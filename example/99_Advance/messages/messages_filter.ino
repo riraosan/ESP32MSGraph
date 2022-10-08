@@ -41,7 +41,7 @@ String count;
 String subject;
 String receivedDateTime;
 String bodyPreview;
-String pre("2022-10-01T00:00:00Z");
+String pre("2022-10-08T00:00:00Z");
 
 Button2 button;
 // Filter by number of emails, receivedDateTime , and subject.
@@ -79,10 +79,13 @@ bool pollMail(String api) {
                                      true);
 
   if (res) {
-    count            = responseDoc["@odata.count"].as<String>();
-    receivedDateTime = responseDoc["value"][0]["receivedDateTime"].as<String>();
-    subject          = responseDoc["value"][0]["subject"].as<String>();
-    bodyPreview      = responseDoc["value"][0]["bodyPreview"].as<String>();
+    count = responseDoc["@odata.count"].as<String>();
+    if (count.toInt() > 0) {
+      int index        = count.toInt() - 1;
+      receivedDateTime = responseDoc["value"][index]["receivedDateTime"].as<String>();
+      subject          = responseDoc["value"][index]["subject"].as<String>();
+      bodyPreview      = responseDoc["value"][index]["bodyPreview"].as<String>();
+    }
 
     log_i("success to get mail counts: %s", count.c_str());
   } else if (responseDoc.containsKey("error")) {
@@ -152,7 +155,7 @@ void setup() {
   button.setDoubleClickHandler(handler);
   button.setTripleClickHandler(handler);
   button.setLongClickHandler(handler);
-  button.begin(37);  // G37
+  button.begin(39);  // ATOM:G39 StickCPlus:G37
 
   deserializeJson(_mailFilter, mailFilter);
   _timer.attach(60, _interval);
@@ -160,6 +163,7 @@ void setup() {
   display.setCursor(10, 10);
   display.println("Connecting...");
 
+  msgraph.setScope("offline_access%20openid%20email%20profile%20Presence.Read%20Mail.Read%20Mail.ReadBasic%20Mail.ReadWrite");
   msgraph.begin();
 
   display.fillScreen(TFT_BLACK);
